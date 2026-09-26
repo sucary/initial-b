@@ -13,6 +13,7 @@ const SHADOW_FADE_SECONDS := 0.3
 @onready var lap_path: LapPath = $PreviousLapPath
 @onready var kart: PlayerKart = $Kart
 @onready var kart_shadow: Sprite2D = $KartShadow
+@onready var course: CourseObjects = $Course
 @onready var camera: Camera2D = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
@@ -42,6 +43,8 @@ func _ready() -> void:
 	camera.snap_to_target()
 	lap_path.begin_lap()
 	lap_path.crossed.connect(_on_path_crossed)
+	course.build(track, randi(), $TrackArt)
+	course.item_box_taken.connect(path_effects.pick_up_item_box)
 
 	_checkpoint_offsets = track.get_checkpoint_offsets()
 	_track_length = track.get_course_length()
@@ -87,8 +90,7 @@ func _physics_process(delta: float) -> void:
 		lap_path.record_position(kart.global_position, lap_time)
 	_update_shadow(lap_time)
 	lap_path.update_contact(kart.global_transform, race_time_limit_seconds - time_left)
-	if lap_path.has_previous_path():
-		path_effects.advance(delta, lap_path.is_following)
+	path_effects.advance(delta, lap_path.is_following, lap_path.has_previous_path())
 	kart.set_path_modifiers(path_effects.speed_scale(), path_effects.acceleration_scale(), path_effects.turn_scale())
 	lap_path.set_appearance(path_effects.state, path_effects.is_active())
 
@@ -125,6 +127,7 @@ func _check_gate_crossing(progress: float) -> void:
 
 	completed_laps += 1
 	lap_path.complete_lap()
+	course.respawn_item_boxes()
 	_next_checkpoint = 0
 	if completed_laps >= TOTAL_LAPS:
 		_end_race(true)

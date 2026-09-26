@@ -7,8 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://wg4i2qo5xrot" path="res://assets/sprites/kart.png" id="5_kart"]
 [ext_resource type="Texture2D" uid="uid://devriit1f6vht" path="res://assets/sprites/kart-shadow.png" id="5_kart_shadow"]
 [ext_resource type="Texture2D" uid="uid://d11u5kbahd8id" path="res://assets/sprites/track.svg" id="6_track_art"]
-[ext_resource type="Texture2D" uid="uid://ywhlfj5qfvex" path="res://assets/sprites/tyre-stack.png" id="7_tyre"]
-[ext_resource type="Texture2D" uid="uid://b2o3k52u1hu5n" path="res://assets/sprites/traffic-barrier.png" id="8_barrier"]
 [ext_resource type="Texture2D" uid="uid://c276047l1umal" path="res://assets/sprites/keycap-a.png" id="9_keycap_a"]
 [ext_resource type="Texture2D" uid="uid://by27qf63j00fk" path="res://assets/sprites/keycap-d.png" id="9_keycap_d"]
 [ext_resource type="Texture2D" uid="uid://cmwu663c1n32j" path="res://assets/sprites/keycap-j.png" id="9_keycap_j"]
@@ -17,9 +15,10 @@
 [ext_resource type="Texture2D" uid="uid://bsxmbbkxpcfna" path="res://assets/sprites/keycap-r.png" id="9_keycap_r"]
 [ext_resource type="FontFile" uid="uid://chpbs2pq6meuy" path="res://assets/fonts/kart-pixel.fnt" id="10_pixel_font"]
 [ext_resource type="Script" path="res://scripts/path.gd" id="11_lap_path"]
+[ext_resource type="Script" path="res://scripts/course_objects.gd" id="12_course"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
-size = Vector2(42, 22)
+size = Vector2(60, 32)
 
 [node name="GameManager" type="Node2D" unique_id=451836013]
 script = ExtResource("1_game_manager")
@@ -38,17 +37,8 @@ centered = false
 [node name="PreviousLapPath" type="Line2D" parent="."]
 texture_filter = 1
 script = ExtResource("11_lap_path")
-[node name="ObstaclePreview" type="Node2D" parent="." unique_id=316756219]
-
-[node name="TyreStack" type="Sprite2D" parent="ObstaclePreview" unique_id=2093028007]
-texture_filter = 1
-position = Vector2(1240, 2600)
-texture = ExtResource("7_tyre")
-
-[node name="TrafficBarrier" type="Sprite2D" parent="ObstaclePreview" unique_id=1188953518]
-texture_filter = 1
-position = Vector2(1450, 2560)
-texture = ExtResource("8_barrier")
+[node name="Course" type="Node2D" parent="." unique_id=316756219]
+script = ExtResource("12_course")
 
 [node name="Track" type="StaticBody2D" parent="." unique_id=1027485893]
 visible = false

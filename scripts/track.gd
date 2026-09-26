@@ -1,55 +1,27 @@
 extends StaticBody2D
 class_name RaceTrack
 
-const CURVE_HANDLE_SCALE := 0.18
 const BOUNDARIES_PATH := "res://resources/track-boundaries.json"
 const GRASS_COLOR := Color(0.405, 0.555, 0.225)
 const ROAD_COLOR := Color(0.27, 0.29, 0.30)
 const BARRIER_COLOR := Color(0.07, 0.085, 0.11)
 const FINISH_DARK := Color(0.08, 0.09, 0.10)
 const FINISH_LIGHT := Color(0.94, 0.94, 0.90)
-const WAYPOINTS := [
-	Vector2(676, 1250),
-	Vector2(676, 360),
-	Vector2(940, 124),
-	Vector2(1180, 260),
-	Vector2(1380, 530),
-	Vector2(1700, 530),
-	Vector2(1820, 540),
-	Vector2(1926, 360),
-	Vector2(2100, 130),
-	Vector2(2340, 130),
-	Vector2(2610, 380),
-	Vector2(2530, 640),
-	Vector2(2320, 720),
-	Vector2(1700, 840),
-	Vector2(1380, 960),
-	Vector2(1360, 1070),
-	Vector2(1600, 1160),
-	Vector2(2450, 1160),
-	Vector2(2680, 1360),
-	Vector2(2620, 1610),
-	Vector2(2380, 1700),
-	Vector2(2000, 1700),
-	Vector2(1860, 1580),
-	Vector2(1800, 1490),
-	Vector2(1650, 1484),
-	Vector2(1500, 1580),
-	Vector2(1300, 1700),
-	Vector2(1000, 1700),
-	Vector2(760, 1600),
-	Vector2(676, 1440),
-]
-
 var center_curve := Curve2D.new()
 var centerline := PackedVector2Array()
+var _boundary_segments := PackedVector2Array()
 
 
 func _ready() -> void:
 	collision_layer = 1
 	collision_mask = 0
-	_build_curve()
-	var contours := _load_boundaries()
+	var data := _load_track_data()
+	if data.is_empty():
+		return
+	_build_curve(_points(data["centerline"]))
+	var contours: Array[PackedVector2Array] = []
+	for raw_contour in data["contours"]:
+		contours.append(_points(raw_contour))
 	if contours.size() != 2:
 		push_error("Track requires an outer and inner road boundary")
 		return
@@ -72,41 +44,63 @@ func get_progress_offset(world_position: Vector2) -> float:
 func get_forward_at_offset(offset: float) -> Vector2:
 	return center_curve.sample_baked_with_rotation(offset).x.normalized()
 
+func get_road_section(offset: float) -> Dictionary:
+	var sample := center_curve.sample_baked_with_rotation(fposmod(offset, get_course_length()))
+	var tangent := sample.x.normalized()
+	var normal := tangent.orthogonal()
+	var center := global_transform * sample.origin
+	var world_tangent := (global_transform.basis_xform(tangent)).normalized()
+	return {
+		"center": center,
+		"tangent": world_tangent,
+		"normal": world_tangent.orthogonal(),
+		"left": _distance_to_wall(sample.origin, normal) * global_scale.x,
+		"right": _distance_to_wall(sample.origin, -normal) * global_scale.x,
+	}
+
+
+func _distance_to_wall(origin: Vector2, direction: Vector2) -> float:
+	var nearest := INF
+	var reach := origin + direction * 1000.0
+	for index in range(0, _boundary_segments.size(), 2):
+		var hit: Variant = Geometry2D.segment_intersects_segment(origin, reach, _boundary_segments[index], _boundary_segments[index + 1])
+		if hit != null:
+			nearest = minf(nearest, origin.distance_to(hit))
+	return nearest
+
+
 func get_checkpoint_offsets() -> PackedFloat32Array:
 	var length := center_curve.get_baked_length()
 	return PackedFloat32Array([length * 0.25, length * 0.5, length * 0.75])
 
 
-func _build_curve() -> void:
-	center_curve.bake_interval = 24.0
-	for index in WAYPOINTS.size():
-		var previous: Vector2 = WAYPOINTS[(index - 1 + WAYPOINTS.size()) % WAYPOINTS.size()]
-		var following: Vector2 = WAYPOINTS[(index + 1) % WAYPOINTS.size()]
-		var handle: Vector2 = (following - previous) * CURVE_HANDLE_SCALE
-		center_curve.add_point(WAYPOINTS[index], -handle, handle)
-	var closing_handle: Vector2 = (WAYPOINTS[1] - WAYPOINTS[-1]) * CURVE_HANDLE_SCALE
-	center_curve.add_point(WAYPOINTS[0], -closing_handle, closing_handle)
+func _build_curve(points: PackedVector2Array) -> void:
+	center_curve.bake_interval = 8.0
+	for point in points:
+		center_curve.add_point(point)
+	center_curve.add_point(points[0])
 	centerline = center_curve.get_baked_points()
 	if centerline.size() > 1 and centerline[0].distance_to(centerline[-1]) < 1.0:
 		centerline.resize(centerline.size() - 1)
 
 
-func _load_boundaries() -> Array[PackedVector2Array]:
-	var contours: Array[PackedVector2Array] = []
+func _load_track_data() -> Dictionary:
 	var file := FileAccess.open(BOUNDARIES_PATH, FileAccess.READ)
 	if file == null:
 		push_error("Track boundary data is missing: " + BOUNDARIES_PATH)
-		return contours
+		return {}
 	var data: Variant = JSON.parse_string(file.get_as_text())
-	if typeof(data) != TYPE_DICTIONARY:
+	if typeof(data) != TYPE_DICTIONARY or not data.has("centerline") or not data.has("contours"):
 		push_error("Invalid track boundary data")
-		return contours
-	for raw_contour in data["contours"]:
-		var points := PackedVector2Array()
-		for raw_point in raw_contour:
-			points.append(Vector2(raw_point[0], raw_point[1]))
-		contours.append(points)
-	return contours
+		return {}
+	return data
+
+
+func _points(raw_points: Array) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for raw_point in raw_points:
+		points.append(Vector2(raw_point[0], raw_point[1]))
+	return points
 
 
 func _build_art(contours: Array[PackedVector2Array]) -> void:
@@ -154,6 +148,7 @@ func _build_walls(contours: Array[PackedVector2Array]) -> void:
 		for index in range(contour.size() - 1):
 			segments.append(contour[index])
 			segments.append(contour[index + 1])
+	_boundary_segments = segments
 	var wall := ConcavePolygonShape2D.new()
 	wall.segments = segments
 	var collision := CollisionShape2D.new()

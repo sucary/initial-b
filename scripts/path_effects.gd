@@ -67,7 +67,7 @@ func pick_up_item_box(box_state: int = -1) -> void:
 	_item_box_state = box_state
 
 
-func advance(delta: float, is_following: bool) -> void:
+func advance(delta: float, is_following: bool, timer_running: bool = true) -> void:
 	following = is_following
 	blend_left = maxf(blend_left - delta, 0.0)
 	decaying_multiplier = move_toward(decaying_multiplier, 1.0, FOLLOW_DECAY_PER_SECOND * delta)
@@ -80,7 +80,8 @@ func advance(delta: float, is_following: bool) -> void:
 			braid_crossings = 0
 	if not following and window_left == 0.0:
 		decaying_multiplier = 1.0
-	state_timer += delta
+	if timer_running:
+		state_timer += delta
 
 	if _item_box_pending:
 		_item_box_pending = false
