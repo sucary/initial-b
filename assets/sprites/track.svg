@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="6688" height="3764" viewBox="0 0 1672 941">
+  <defs>
+    <path id="course" d="M 380,615
+      L 380,184
+      C 380,95 430,60 505,60
+      C 560,60 600,90 635,160
+      L 690,246
+      C 705,272 730,274 765,274
+      L 865,274
+      C 900,274 918,260 935,224
+      L 983,122
+      C 1007,68 1047,60 1115,60
+      L 1165,60
+      C 1240,60 1298,116 1298,202
+      L 1298,258
+      C 1298,319 1260,349 1208,360
+      L 715,467
+      C 650,480 658,552 714,552
+      L 1196,552
+      C 1265,552 1300,605 1300,680
+      L 1300,719
+      C 1300,789 1250,858 1168,858
+      L 1040,858
+      C 980,858 966,833 952,793
+      C 940,755 920,735 877,735
+      L 813,735
+      C 775,735 757,755 720,793
+      L 653,857
+      C 620,860 580,858 520,858
+      C 430,858 380,830 380,730
+      Z"/>
+  </defs>
+  <use href="#course" fill="none" stroke="#16191e" stroke-width="89" stroke-linecap="round" stroke-linejoin="round"/>
+  <use href="#course" fill="none" stroke="#44494b" stroke-width="84" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="338" y="603" width="84" height="24" fill="#16191e"/>
+  <g fill="#f4f4ef">
+    <rect x="338" y="603" width="10.5" height="12"/>
+    <rect x="359" y="603" width="10.5" height="12"/>
+    <rect x="380" y="603" width="10.5" height="12"/>
+    <rect x="401" y="603" width="10.5" height="12"/>
+    <rect x="348.5" y="615" width="10.5" height="12"/>
+    <rect x="369.5" y="615" width="10.5" height="12"/>
+    <rect x="390.5" y="615" width="10.5" height="12"/>
+    <rect x="411.5" y="615" width="10.5" height="12"/>
+  </g>
+</svg>

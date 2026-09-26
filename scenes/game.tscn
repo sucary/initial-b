@@ -1,0 +1,298 @@
+[gd_scene format=3 uid="uid://c3rceuut6vecx"]
+
+[ext_resource type="Script" uid="uid://drmeorlu5f6bp" path="res://scripts/game_manager.gd" id="1_game_manager"]
+[ext_resource type="Script" uid="uid://c77fchu0k6e23" path="res://scripts/track.gd" id="2_track"]
+[ext_resource type="Script" uid="uid://loeo2ummej4g" path="res://scripts/kart.gd" id="3_kart"]
+[ext_resource type="Script" uid="uid://dvo8fcn52e8mt" path="res://scripts/camera.gd" id="4_camera"]
+[ext_resource type="Texture2D" uid="uid://wg4i2qo5xrot" path="res://assets/sprites/kart.png" id="5_kart"]
+[ext_resource type="Texture2D" uid="uid://devriit1f6vht" path="res://assets/sprites/kart-shadow.png" id="5_kart_shadow"]
+[ext_resource type="Texture2D" uid="uid://d11u5kbahd8id" path="res://assets/sprites/track.svg" id="6_track_art"]
+[ext_resource type="Texture2D" uid="uid://ywhlfj5qfvex" path="res://assets/sprites/tyre-stack.png" id="7_tyre"]
+[ext_resource type="Texture2D" uid="uid://b2o3k52u1hu5n" path="res://assets/sprites/traffic-barrier.png" id="8_barrier"]
+[ext_resource type="Texture2D" uid="uid://c276047l1umal" path="res://assets/sprites/keycap-a.png" id="9_keycap_a"]
+[ext_resource type="Texture2D" uid="uid://by27qf63j00fk" path="res://assets/sprites/keycap-d.png" id="9_keycap_d"]
+[ext_resource type="Texture2D" uid="uid://cmwu663c1n32j" path="res://assets/sprites/keycap-j.png" id="9_keycap_j"]
+[ext_resource type="Texture2D" uid="uid://bukw574b1qsqs" path="res://assets/sprites/keycap-k.png" id="9_keycap_k"]
+[ext_resource type="Texture2D" uid="uid://dww3cr5b8dlor" path="res://assets/sprites/keycap-l.png" id="9_keycap_l"]
+[ext_resource type="Texture2D" uid="uid://bsxmbbkxpcfna" path="res://assets/sprites/keycap-r.png" id="9_keycap_r"]
+[ext_resource type="FontFile" uid="uid://chpbs2pq6meuy" path="res://assets/fonts/kart-pixel.fnt" id="10_pixel_font"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
+size = Vector2(42, 22)
+
+[node name="GameManager" type="Node2D" unique_id=451836013]
+script = ExtResource("1_game_manager")
+
+[node name="GrassBackdrop" type="Polygon2D" parent="." unique_id=2112036251]
+color = Color(0.435, 0.588, 0.243, 1)
+polygon = PackedVector2Array(-4096, -4096, 8192, -4096, 8192, 8192, -4096, 8192)
+
+[node name="TrackArt" type="Sprite2D" parent="." unique_id=1595889190]
+texture_filter = 2
+position = Vector2(-336, 0)
+scale = Vector2(1.1, 1)
+texture = ExtResource("6_track_art")
+centered = false
+
+[node name="ObstaclePreview" type="Node2D" parent="." unique_id=316756219]
+
+[node name="TyreStack" type="Sprite2D" parent="ObstaclePreview" unique_id=2093028007]
+texture_filter = 1
+position = Vector2(1240, 2600)
+texture = ExtResource("7_tyre")
+
+[node name="TrafficBarrier" type="Sprite2D" parent="ObstaclePreview" unique_id=1188953518]
+texture_filter = 1
+position = Vector2(1450, 2560)
+texture = ExtResource("8_barrier")
+
+[node name="Track" type="StaticBody2D" parent="." unique_id=1027485893]
+visible = false
+scale = Vector2(2, 2)
+script = ExtResource("2_track")
+
+[node name="Kart" type="CharacterBody2D" parent="." unique_id=593377400]
+script = ExtResource("3_kart")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Kart" unique_id=277379229]
+shape = SubResource("RectangleShape2D_kart")
+
+[node name="KartShadow" type="Sprite2D" parent="Kart" unique_id=372536702]
+texture_filter = 1
+position = Vector2(3, 4)
+texture = ExtResource("5_kart_shadow")
+
+[node name="KartSprite" type="Sprite2D" parent="Kart" unique_id=106395585]
+texture_filter = 1
+texture = ExtResource("5_kart")
+
+[node name="Camera" type="Camera2D" parent="." unique_id=796030122]
+script = ExtResource("4_camera")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=2049438229]
+
+[node name="KeybindHUD" type="Control" parent="HUD" unique_id=1766120597]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -132.0
+offset_right = -20.0
+offset_bottom = -20.0
+mouse_filter = 2
+
+[node name="KeyA" type="TextureRect" parent="HUD/KeybindHUD" unique_id=889129013]
+texture_filter = 1
+layout_mode = 0
+offset_left = 85.0
+offset_top = 0.0
+offset_right = 115.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_a")
+expand_mode = 1
+
+[node name="KeyALabel" type="Label" parent="HUD/KeybindHUD" unique_id=1657465120]
+texture_filter = 1
+layout_mode = 0
+offset_left = 50.0
+offset_top = 34.0
+offset_right = 150.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "LEFT"
+horizontal_alignment = 1
+
+[node name="KeyD" type="TextureRect" parent="HUD/KeybindHUD" unique_id=276708907]
+texture_filter = 1
+layout_mode = 0
+offset_left = 185.0
+offset_top = 0.0
+offset_right = 215.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_d")
+expand_mode = 1
+
+[node name="KeyDLabel" type="Label" parent="HUD/KeybindHUD" unique_id=1540921684]
+texture_filter = 1
+layout_mode = 0
+offset_left = 150.0
+offset_top = 34.0
+offset_right = 250.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "RIGHT"
+horizontal_alignment = 1
+
+[node name="KeyJ" type="TextureRect" parent="HUD/KeybindHUD" unique_id=843022415]
+texture_filter = 1
+layout_mode = 0
+offset_left = 35.0
+offset_top = 58.0
+offset_right = 65.0
+offset_bottom = 88.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_j")
+expand_mode = 1
+
+[node name="KeyJLabel" type="Label" parent="HUD/KeybindHUD" unique_id=222935320]
+texture_filter = 1
+layout_mode = 0
+offset_left = 0.0
+offset_top = 92.0
+offset_right = 100.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "GAS"
+horizontal_alignment = 1
+
+[node name="KeyK" type="TextureRect" parent="HUD/KeybindHUD" unique_id=625602361]
+texture_filter = 1
+layout_mode = 0
+offset_left = 135.0
+offset_top = 58.0
+offset_right = 165.0
+offset_bottom = 88.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_k")
+expand_mode = 1
+
+[node name="KeyKLabel" type="Label" parent="HUD/KeybindHUD" unique_id=1623729456]
+texture_filter = 1
+layout_mode = 0
+offset_left = 100.0
+offset_top = 92.0
+offset_right = 200.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "H BREAK"
+horizontal_alignment = 1
+
+[node name="KeyL" type="TextureRect" parent="HUD/KeybindHUD" unique_id=1814115210]
+texture_filter = 1
+layout_mode = 0
+offset_left = 235.0
+offset_top = 58.0
+offset_right = 265.0
+offset_bottom = 88.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_l")
+expand_mode = 1
+
+[node name="KeyLLabel" type="Label" parent="HUD/KeybindHUD" unique_id=672051867]
+texture_filter = 1
+layout_mode = 0
+offset_left = 200.0
+offset_top = 92.0
+offset_right = 300.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "BRAKE"
+horizontal_alignment = 1
+
+[node name="RestartHUD" type="Control" parent="HUD" unique_id=1241904739]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -75.0
+offset_right = 120.0
+offset_bottom = -20.0
+mouse_filter = 2
+
+[node name="KeyR" type="TextureRect" parent="HUD/RestartHUD" unique_id=1881529191]
+texture_filter = 1
+layout_mode = 0
+offset_left = 35.0
+offset_right = 65.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("9_keycap_r")
+expand_mode = 1
+
+[node name="KeyRLabel" type="Label" parent="HUD/RestartHUD" unique_id=921807557]
+texture_filter = 1
+layout_mode = 0
+offset_top = 34.0
+offset_right = 100.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "RESTART"
+horizontal_alignment = 1
+
+[node name="RacePanel" type="ColorRect" parent="HUD" unique_id=820577076]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 290.0
+offset_bottom = 116.0
+mouse_filter = 2
+color = Color(0.055, 0.065, 0.08, 0.78)
+
+[node name="LapLabel" type="Label" parent="HUD/RacePanel" unique_id=440122356]
+texture_filter = 1
+layout_mode = 0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 256.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "LAP 1 / 3"
+
+[node name="TimeLabel" type="Label" parent="HUD/RacePanel" unique_id=24168114]
+texture_filter = 1
+layout_mode = 0
+offset_left = 14.0
+offset_top = 50.0
+offset_right = 256.0
+offset_bottom = 82.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "TIME 03:00"
+
+[node name="ResultPanel" type="ColorRect" parent="HUD" unique_id=585436228]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -110.0
+offset_right = 230.0
+offset_bottom = 110.0
+mouse_filter = 2
+color = Color(0.055, 0.065, 0.08, 0.88)
+
+[node name="ResultLabel" type="Label" parent="HUD/ResultPanel" unique_id=748824247]
+texture_filter = 1
+layout_mode = 0
+offset_left = 20.0
+offset_top = 25.0
+offset_right = 440.0
+offset_bottom = 195.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "FINISHED!"
+horizontal_alignment = 1
+vertical_alignment = 1
