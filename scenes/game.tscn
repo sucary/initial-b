@@ -14,11 +14,11 @@
 [ext_resource type="Texture2D" uid="uid://dww3cr5b8dlor" path="res://assets/sprites/keycap-l.png" id="9_keycap_l"]
 [ext_resource type="Texture2D" uid="uid://bsxmbbkxpcfna" path="res://assets/sprites/keycap-r.png" id="9_keycap_r"]
 [ext_resource type="FontFile" uid="uid://chpbs2pq6meuy" path="res://assets/fonts/kart-pixel.fnt" id="10_pixel_font"]
-[ext_resource type="Script" path="res://scripts/path.gd" id="11_lap_path"]
-[ext_resource type="Script" path="res://scripts/course_objects.gd" id="12_course"]
-[ext_resource type="Script" path="res://scripts/speed_dashboard.gd" id="13_speed_dashboard"]
-[ext_resource type="Script" path="res://scripts/start_lights.gd" id="14_start_lights"]
-[ext_resource type="Script" path="res://scripts/start_grid.gd" id="15_start_grid"]
+[ext_resource type="Script" uid="uid://dghqgqng2v412" path="res://scripts/path.gd" id="11_lap_path"]
+[ext_resource type="Script" uid="uid://cu58pok5mgwke" path="res://scripts/course_objects.gd" id="12_course"]
+[ext_resource type="Script" uid="uid://ccweiuw2qm4em" path="res://scripts/speed_dashboard.gd" id="13_speed_dashboard"]
+[ext_resource type="Script" uid="uid://ddiu1xe7rq1x7" path="res://scripts/start_lights.gd" id="14_start_lights"]
+[ext_resource type="Script" uid="uid://co33uqgks5pm2" path="res://scripts/start_grid.gd" id="15_start_grid"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
 size = Vector2(60, 32)
@@ -37,12 +37,13 @@ scale = Vector2(1.1, 1)
 texture = ExtResource("6_track_art")
 centered = false
 
-[node name="StartGrid" type="Node2D" parent="."]
+[node name="StartGrid" type="Node2D" parent="." unique_id=1134569221]
 script = ExtResource("15_start_grid")
 
-[node name="PreviousLapPath" type="Line2D" parent="."]
+[node name="PreviousLapPath" type="Line2D" parent="." unique_id=1847267528]
 texture_filter = 1
 script = ExtResource("11_lap_path")
+
 [node name="Course" type="Node2D" parent="." unique_id=316756219]
 script = ExtResource("12_course")
 
@@ -82,13 +83,14 @@ offset_left = -320.0
 offset_top = -132.0
 offset_right = -20.0
 offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
 mouse_filter = 2
 
 [node name="KeyA" type="TextureRect" parent="HUD/KeybindHUD" unique_id=889129013]
 texture_filter = 1
 layout_mode = 0
 offset_left = 85.0
-offset_top = 0.0
 offset_right = 115.0
 offset_bottom = 30.0
 mouse_filter = 2
@@ -112,7 +114,6 @@ horizontal_alignment = 1
 texture_filter = 1
 layout_mode = 0
 offset_left = 185.0
-offset_top = 0.0
 offset_right = 215.0
 offset_bottom = 30.0
 mouse_filter = 2
@@ -146,7 +147,6 @@ expand_mode = 1
 [node name="KeyJLabel" type="Label" parent="HUD/KeybindHUD" unique_id=222935320]
 texture_filter = 1
 layout_mode = 0
-offset_left = 0.0
 offset_top = 92.0
 offset_right = 100.0
 offset_bottom = 112.0
@@ -213,6 +213,7 @@ offset_left = 20.0
 offset_top = -75.0
 offset_right = 120.0
 offset_bottom = -20.0
+grow_vertical = 0
 mouse_filter = 2
 
 [node name="KeyR" type="TextureRect" parent="HUD/RestartHUD" unique_id=1881529191]
@@ -269,7 +270,7 @@ theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 24
 text = "TIME 03:00"
 
-[node name="SpeedDashboard" type="Control" parent="HUD"]
+[node name="SpeedDashboard" type="Control" parent="HUD" unique_id=577834521]
 layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
@@ -278,10 +279,11 @@ offset_left = -220.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = 270.0
+grow_horizontal = 0
 mouse_filter = 2
 script = ExtResource("13_speed_dashboard")
 
-[node name="StartLights" type="HBoxContainer" parent="HUD"]
+[node name="StartLights" type="HBoxContainer" parent="HUD" unique_id=314285486]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -300,23 +302,125 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -230.0
-offset_top = -110.0
-offset_right = 230.0
-offset_bottom = 110.0
+offset_left = -280.0
+offset_top = -150.0
+offset_right = 280.0
+offset_bottom = 150.0
 mouse_filter = 2
 color = Color(0.055, 0.065, 0.08, 0.88)
 
-[node name="ResultLabel" type="Label" parent="HUD/ResultPanel" unique_id=748824247]
-texture_filter = 1
-layout_mode = 0
+[node name="Lines" type="VBoxContainer" parent="HUD/ResultPanel" unique_id=1976805466]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 25.0
-offset_right = 440.0
-offset_bottom = 195.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="FinishedLabel" type="Label" parent="HUD/ResultPanel/Lines" unique_id=1510867201]
+texture_filter = 1
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 24
 text = "FINISHED!"
 horizontal_alignment = 1
+
+[node name="TimeUpLabel" type="Label" parent="HUD/ResultPanel/Lines" unique_id=1220458322]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "TIME UP!"
+horizontal_alignment = 1
+
+[node name="FinishTimeLabel" type="Label" parent="HUD/ResultPanel/Lines" unique_id=280197956]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "TIME {time}"
+horizontal_alignment = 1
+
+[node name="HintGap" type="Control" parent="HUD/ResultPanel/Lines" unique_id=1831088378]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="RestartRow" type="HBoxContainer" parent="HUD/ResultPanel/Lines" unique_id=1755218188]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PressLabel" type="Label" parent="HUD/ResultPanel/Lines/RestartRow" unique_id=1469016436]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "PRESS"
+vertical_alignment = 1
+
+[node name="Key" type="TextureRect" parent="HUD/ResultPanel/Lines/RestartRow" unique_id=2079364816]
+texture_filter = 1
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("9_keycap_r")
+stretch_mode = 2
+
+[node name="ActionLabel" type="Label" parent="HUD/ResultPanel/Lines/RestartRow" unique_id=1638509238]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "TO RESTART"
+vertical_alignment = 1
+
+[node name="ButtonGap" type="Control" parent="HUD/ResultPanel/Lines" unique_id=1492015235]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="StartScreenRow" type="HBoxContainer" parent="HUD/ResultPanel/Lines" unique_id=273425296]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PressLabel" type="Label" parent="HUD/ResultPanel/Lines/StartScreenRow" unique_id=1413209069]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "PRESS"
+vertical_alignment = 1
+
+[node name="Key" type="TextureRect" parent="HUD/ResultPanel/Lines/StartScreenRow" unique_id=104675249]
+texture_filter = 1
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("9_keycap_l")
+stretch_mode = 2
+
+[node name="ActionLabel" type="Label" parent="HUD/ResultPanel/Lines/StartScreenRow" unique_id=1445474660]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 24
+text = "FOR START SCREEN"
 vertical_alignment = 1

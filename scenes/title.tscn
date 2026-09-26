@@ -1,0 +1,136 @@
+[gd_scene format=3 uid="uid://bcvxyt8wss48s"]
+
+[ext_resource type="Script" uid="uid://nc1s6173i7r1" path="res://scripts/title_screen.gd" id="1_title"]
+[ext_resource type="Texture2D" uid="uid://wg4i2qo5xrot" path="res://assets/sprites/kart.png" id="2_kart"]
+[ext_resource type="FontFile" uid="uid://chpbs2pq6meuy" path="res://assets/fonts/kart-pixel.fnt" id="3_font"]
+[ext_resource type="Texture2D" uid="uid://cmwu663c1n32j" path="res://assets/sprites/keycap-j.png" id="4_keycap_j"]
+
+[node name="TitleScreen" type="Control" unique_id=781806632]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="Grass" type="ColorRect" parent="." unique_id=2100451105]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.435, 0.588, 0.243, 1)
+
+[node name="Panel" type="ColorRect" parent="." unique_id=952430934]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -300.0
+offset_right = 400.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.065, 0.08, 0.85)
+
+[node name="TitleLabel" type="Label" parent="Panel" unique_id=463434492]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 110.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 72
+text = "INITIAL B"
+horizontal_alignment = 1
+
+[node name="Kart" type="TextureRect" parent="Panel" unique_id=1146819839]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -64.0
+offset_top = 125.0
+offset_right = 64.0
+offset_bottom = 205.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("2_kart")
+expand_mode = 1
+
+[node name="StoryLabel" type="Label" parent="Panel" unique_id=224161732]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = 230.0
+offset_right = -60.0
+offset_bottom = -95.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.86, 0.9, 0.94, 1)
+theme_override_constants/line_spacing = 6
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "YOU'RE MID-RACE AND JUST FOUND OUT QUANTUM BRAIDING IS REAL. IT'S RIGHT HERE ON THIS TRACK.
+
+EVERY LAP LEAVES A TRAIL THAT CAN HELP YOU OR MAKE THINGS WORSE.
+
+THE CLOCK IS TOO TIGHT FOR YOUR VINTAGE KART. YOU'LL NEED YOUR OLD TRAILS.
+
+USE IT WISELY!"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="PromptRow" type="HBoxContainer" parent="Panel" unique_id=358502578]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -75.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PressLabel" type="Label" parent="Panel/PromptRow"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 24
+text = "PRESS"
+vertical_alignment = 1
+
+[node name="Key" type="TextureRect" parent="Panel/PromptRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("4_keycap_j")
+stretch_mode = 2
+
+[node name="ActionLabel" type="Label" parent="Panel/PromptRow"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 24
+text = "TO START"
+vertical_alignment = 1

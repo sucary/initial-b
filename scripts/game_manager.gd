@@ -6,6 +6,7 @@ const PROGRESS_TOLERANCE := 96.0
 const PATH_START_AFTER_FINISH := 52.0
 const PATH_END_BEFORE_FINISH := 18.0
 const SHADOW_FADE_SECONDS := 0.3
+const TITLE_SCENE := "res://scenes/title.tscn"
 
 @export_range(30.0, 600.0, 5.0) var race_time_limit_seconds := 180.0
 
@@ -21,7 +22,10 @@ const SHADOW_FADE_SECONDS := 0.3
 @onready var speed_dashboard: SpeedDashboard = $HUD/SpeedDashboard
 @onready var start_lights: StartLights = $HUD/StartLights
 @onready var result_panel: ColorRect = $HUD/ResultPanel
-@onready var result_label: Label = $HUD/ResultPanel/ResultLabel
+@onready var finished_label: Label = $HUD/ResultPanel/Lines/FinishedLabel
+@onready var time_up_label: Label = $HUD/ResultPanel/Lines/TimeUpLabel
+@onready var finish_time_label: Label = $HUD/ResultPanel/Lines/FinishTimeLabel
+@onready var _finish_time_template := finish_time_label.text
 
 var completed_laps := 0
 var time_left := 0.0
@@ -150,17 +154,18 @@ func _end_race(won: bool) -> void:
 	kart.set_physics_process(false)
 	camera.follows_input = false
 	result_panel.visible = true
-	if won:
-		var elapsed := race_time_limit_seconds - time_left
-		result_label.text = "FINISHED!\nTIME %s\nPRESS R TO RESTART" % _format_time(elapsed)
-	else:
-		result_label.text = "TIME UP!\nPRESS R TO RESTART"
+	finished_label.visible = won
+	time_up_label.visible = not won
+	finish_time_label.visible = won
+	finish_time_label.text = _finish_time_template.replace("{time}", _format_time(time_left))
 	_update_hud()
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
 		get_tree().call_deferred("reload_current_scene")
+	elif _race_over and event.is_action_pressed("brake") and not event.is_echo():
+		get_tree().change_scene_to_file.call_deferred(TITLE_SCENE)
 
 
 func _update_hud() -> void:
