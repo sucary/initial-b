@@ -227,6 +227,10 @@ func replay_transform(lap_time: float) -> Transform2D:
 	return global_transform * Transform2D((end - start).angle(), start.lerp(end, along))
 
 
+func state_color(state: PathEffects.State) -> Color:
+	return _core_colors[STATE_TEXTURES[state][1]]
+
+
 func set_appearance(state: PathEffects.State, active: bool) -> void:
 	var texture: Texture2D = STATE_TEXTURES[state][1 if active else 0]
 	_ribbon.texture = texture

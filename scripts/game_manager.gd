@@ -17,8 +17,7 @@ const SHADOW_FADE_SECONDS := 0.3
 @onready var camera: Camera2D = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
-@onready var path_status_label: Label = $HUD/RacePanel/PathStatusLabel
-@onready var path_effect_label: Label = $HUD/RacePanel/PathEffectLabel
+@onready var speed_dashboard: SpeedDashboard = $HUD/SpeedDashboard
 @onready var result_panel: ColorRect = $HUD/ResultPanel
 @onready var result_label: Label = $HUD/ResultPanel/ResultLabel
 
@@ -154,17 +153,7 @@ func _input(event: InputEvent) -> void:
 func _update_hud() -> void:
 	lap_label.text = "LAP %d / %d" % [mini(completed_laps + 1, TOTAL_LAPS), TOTAL_LAPS]
 	time_label.text = "TIME %s" % _format_time(time_left)
-	path_effect_label.text = ""
-	if not lap_path.has_previous_path():
-		path_status_label.text = "PATH: RECORDING"
-		return
-	var multiplier := path_effects.effect_multiplier()
-	var strength := "X%.1f" % multiplier if multiplier > 0.0 else "OFF"
-	path_status_label.text = "PATH: %s %s" % [path_effects.state_name(), strength]
-	if path_effects.is_braiding():
-		path_effect_label.text = "BRAID X%.1f %.1fS" % [path_effects.braid_boost(), path_effects.window_left]
-	elif path_effects.window_left > 0.0:
-		path_effect_label.text = "CROSSED %.1fS" % path_effects.window_left
+	speed_dashboard.show_state(kart.velocity.length(), path_effects.effect_crossings, path_effects.window_left / PathEffects.BRAID_WINDOW_SECONDS, path_effects.is_maxed(), lap_path.state_color(path_effects.state))
 
 
 func _on_path_crossed(_total_crossings: int) -> void:

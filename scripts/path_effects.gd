@@ -6,7 +6,6 @@ signal state_changed(state: State, source: Source)
 enum State { ICE, MUD, LIGHTNING }
 enum Source { ITEM_BOX, BRAID, TIMER }
 
-const STATE_NAMES := ["ICE", "MUD", "LIGHTNING"]
 const BRAID_WINDOW_SECONDS := 2.5
 const STATE_TIMER_SECONDS := 10.0
 const CROSSING_MULTIPLIER_STEP := 0.5
@@ -17,8 +16,8 @@ const MUD_SLOW_ONSET_PER_SECOND := 2.0
 const MUD_RECOVERY_PER_SECOND := 0.35
 const BRAID_BOOST_STEP := 0.1
 const MAX_BRAID_BOOST := 1.4
-const BRAID_THRESHOLD_MIN := 4
-const BRAID_THRESHOLD_MAX := 6
+const BRAID_THRESHOLD_MIN := 5
+const BRAID_THRESHOLD_MAX := 7
 const ICE_TURN_PER_MULTIPLIER := 0.3
 const MUD_SPEED_PER_MULTIPLIER := 0.18
 const MUD_TURN_PER_MULTIPLIER := 0.2
@@ -117,6 +116,10 @@ func _crossing_multiplier() -> float:
 	return minf(1.0 + CROSSING_MULTIPLIER_STEP * effect_crossings, MAX_EFFECT_MULTIPLIER)
 
 
+func is_maxed() -> bool:
+	return window_left > 0.0 and _crossing_multiplier() >= MAX_EFFECT_MULTIPLIER and braid_boost() >= MAX_BRAID_BOOST
+
+
 func braid_boost() -> float:
 	if not is_braiding():
 		return 1.0
@@ -133,10 +136,6 @@ func acceleration_scale() -> float:
 
 func turn_scale() -> float:
 	return _blended_scales().z
-
-
-func state_name() -> String:
-	return STATE_NAMES[state]
 
 
 func _blended_scales() -> Vector3:
@@ -168,6 +167,11 @@ func _change_state(new_state: int, source: Source) -> void:
 	blend_left = STATE_BLEND_SECONDS
 	state = new_state as State
 	state_timer = 0.0
+	if source != Source.ITEM_BOX:
+		effect_crossings = 0
+		braid_crossings = 0
+		window_left = 0.0
+		decaying_multiplier = 1.0
 	state_changed.emit(state, source)
 
 
