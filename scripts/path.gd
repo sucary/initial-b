@@ -14,6 +14,13 @@ const TEXTURE_CORE_ROWS := 16.0
 const END_DISSOLVE_LENGTH := 36.0
 const CELL_SIZE := 128.0
 const REVEAL_SECONDS := 10.0
+const END_PARTICLE_AMOUNT := 18
+const END_PARTICLE_LIFETIME := 0.8
+const END_PARTICLE_SPREAD := 40.0
+const END_PARTICLE_SPEED_MIN := 12.0
+const END_PARTICLE_SPEED_MAX := 36.0
+const END_PARTICLE_SIZE_MIN := 1.5
+const END_PARTICLE_SIZE_MAX := 3.0
 
 @export_range(8.0, 64.0, 2.0) var path_width := 20.0
 @export_range(4.0, 32.0, 2.0) var sample_spacing := 12.0
@@ -42,6 +49,9 @@ var _entry_time := 0.0
 var _entry_anchor := Vector2.ZERO
 var _entry_tangent := Vector2.RIGHT
 var _entry_near_end := false
+var _head_particles: CPUParticles2D
+var _tail_particles: CPUParticles2D
+var _core_colors := {}
 
 
 func _ready() -> void:
@@ -80,10 +90,44 @@ void fragment() {
 	_ribbon_material.set_shader_parameter("texture_size", Vector2(TEXTURE_COLUMNS, TEXTURE_ROWS))
 	_ribbon.material = _ribbon_material
 	add_child(_ribbon)
+	_tail_particles = _end_particles(-1.0)
+	_head_particles = _end_particles(1.0)
+	for textures in STATE_TEXTURES.values():
+		for texture in textures:
+			var core_color: Color = texture.get_image().get_pixel(int(TEXTURE_COLUMNS * 0.5), int(TEXTURE_ROWS * 0.5))
+			core_color.a = 1.0
+			_core_colors[texture] = core_color
+	set_appearance(PathEffects.State.ICE, false)
 	visible = false
 
 
+func _end_particles(drift: float) -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
+	particles.emitting = false
+	particles.amount = END_PARTICLE_AMOUNT
+	particles.lifetime = END_PARTICLE_LIFETIME
+	particles.local_coords = false
+	particles.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = Vector2(END_DISSOLVE_LENGTH * 0.5, path_width * 0.5)
+	particles.direction = Vector2(drift, 0.0)
+	particles.spread = END_PARTICLE_SPREAD
+	particles.gravity = Vector2.ZERO
+	particles.initial_velocity_min = END_PARTICLE_SPEED_MIN
+	particles.initial_velocity_max = END_PARTICLE_SPEED_MAX
+	particles.scale_amount_min = END_PARTICLE_SIZE_MIN
+	particles.scale_amount_max = END_PARTICLE_SIZE_MAX
+	var fade := Gradient.new()
+	fade.set_color(0, Color.WHITE)
+	fade.set_color(1, Color(1, 1, 1, 0))
+	particles.color_ramp = fade
+	add_child(particles)
+	return particles
+
+
 func _process(delta: float) -> void:
+	if has_previous_path():
+		_update_end_particles()
 	if has_previous_path() and _revealed_distance < _full_path_length:
 		_reveal_elapsed = minf(_reveal_elapsed + delta, REVEAL_SECONDS)
 		_revealed_distance = _full_path_length * _reveal_elapsed / REVEAL_SECONDS
@@ -120,6 +164,8 @@ func complete_lap() -> void:
 		_visible_end_point = points[0]
 		_ribbon_material.set_shader_parameter("reveal_distance", 0.0)
 		visible = true
+		_tail_particles.restart()
+		_head_particles.restart()
 	begin_lap()
 	_reset_contact()
 
@@ -182,7 +228,20 @@ func replay_transform(lap_time: float) -> Transform2D:
 
 
 func set_appearance(state: PathEffects.State, active: bool) -> void:
-	_ribbon.texture = STATE_TEXTURES[state][1 if active else 0]
+	var texture: Texture2D = STATE_TEXTURES[state][1 if active else 0]
+	_ribbon.texture = texture
+	_tail_particles.color = _core_colors[texture]
+	_head_particles.color = _core_colors[texture]
+
+
+func _update_end_particles() -> void:
+	var tail_direction := (points[1] - points[0]).normalized()
+	_tail_particles.position = points[0] + tail_direction * END_DISSOLVE_LENGTH * 0.5
+	_tail_particles.rotation = tail_direction.angle()
+	var head_direction := (points[_visible_end_segment + 1] - points[_visible_end_segment]).normalized()
+	_head_particles.position = _visible_end_point - head_direction * END_DISSOLVE_LENGTH * 0.5
+	_head_particles.rotation = head_direction.angle()
+	_head_particles.emitting = _revealed_distance > END_DISSOLVE_LENGTH
 
 
 func _smoothed_route(route: PackedVector2Array) -> PackedVector2Array:

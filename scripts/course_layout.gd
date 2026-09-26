@@ -9,9 +9,11 @@ const MIN_SET_SPACING := 550.0
 const SET_JITTER := 0.3
 const SHAPE_WEIGHTS := {"single": 15, "cluster": 30, "partial": 25, "row": 20, "slalom": 10}
 const CLUSTER_COUNT_MIN := 3
-const CLUSTER_COUNT_MAX := 5
-const CLUSTER_SPREAD := 50.0
-const CLUSTER_STEP := 40.0
+const CLUSTER_COUNT_MAX := 4
+const CLUSTER_COLUMN_GAP := 70.0
+const CLUSTER_DEPTH := 140.0
+const CLUSTER_WIDTH_SHARE := 0.75
+const CLUSTER_LANE_MIN := 70.0
 const PARTIAL_COUNT_MIN := 3
 const PARTIAL_COUNT_MAX := 5
 const PARTIAL_LANE_MIN := 100.0
@@ -81,11 +83,10 @@ func generate_obstacles() -> void:
 func _place_set(target: float, low: float, high: float, set_index: int) -> bool:
 	var shape := _pick_shape()
 	var rows := _rng.randi_range(SLALOM_ROWS_MIN, SLALOM_ROWS_MAX) if shape == "slalom" else 1
-	var cluster_count := _rng.randi_range(CLUSTER_COUNT_MIN, CLUSTER_COUNT_MAX)
 	var depth := 0.0
 	match shape:
 		"cluster":
-			depth = CLUSTER_STEP * (cluster_count - 1)
+			depth = CLUSTER_DEPTH
 		"slalom":
 			depth = SLALOM_ROW_SPACING * (rows - 1)
 	var distance := _find_set_distance(clampf(target, low, high - depth), low, high - depth, depth)
@@ -96,7 +97,7 @@ func _place_set(target: float, low: float, high: float, set_index: int) -> bool:
 		"single":
 			_add_single(distance, hard, set_index)
 		"cluster":
-			_add_cluster(distance, cluster_count, hard, set_index)
+			_add_cluster(distance, hard, set_index)
 		"partial":
 			_add_partial(distance, hard, set_index)
 		"row":
@@ -231,12 +232,26 @@ func _add_single(distance: float, hard: bool, set_index: int) -> void:
 	_add_obstacle(section, distance, _rng.randf_range(span.x, span.y), hard, set_index, "single")
 
 
-func _add_cluster(distance: float, count: int, hard: bool, set_index: int) -> void:
+func _add_cluster(distance: float, hard: bool, set_index: int) -> void:
 	var span := _center_range(section_at(distance))
-	var anchor := _rng.randf_range(span.x + CLUSTER_SPREAD, span.y - CLUSTER_SPREAD)
+	var width := minf((span.y - span.x) * CLUSTER_WIDTH_SHARE, span.y - span.x - CLUSTER_LANE_MIN)
+	var count := _rng.randi_range(CLUSTER_COUNT_MIN, CLUSTER_COUNT_MAX)
+	while count > 2 and width / (count - 1) < CLUSTER_COLUMN_GAP:
+		count -= 1
+	width = maxf(width, CLUSTER_COLUMN_GAP * (count - 1))
+	var inset := _rng.randf_range(0.0, maxf(span.y - span.x - width - CLUSTER_LANE_MIN, 0.0))
+	var start := span.x + inset if _rng.randf() < 0.5 else span.y - width - inset
+	var slots := range(count)
+	for index in range(count - 1, 0, -1):
+		var swap := _rng.randi_range(0, index)
+		var held: int = slots[index]
+		slots[index] = slots[swap]
+		slots[swap] = held
+	var column_step := width / (count - 1)
+	var jitter := (column_step - CLUSTER_COLUMN_GAP) * 0.5
 	for index in range(count):
-		var along := CLUSTER_STEP * index
-		var across := anchor + _rng.randf_range(-CLUSTER_SPREAD, CLUSTER_SPREAD)
+		var across := start + column_step * index + _rng.randf_range(-jitter, jitter)
+		var along: float = CLUSTER_DEPTH * slots[index] / (count - 1)
 		_add_obstacle(section_at(distance + along), distance + along, across, hard, set_index, "cluster")
 
 
@@ -302,6 +317,7 @@ func _add_obstacle(section: Dictionary, distance: float, across: float, hard: bo
 		"set": set_index,
 		"shape": shape,
 		"distance": distance,
+		"across": across,
 	})
 
 
