@@ -2,15 +2,19 @@ extends Node2D
 class_name GameManager
 
 const TOTAL_LAPS := 3
-const PROGRESS_TOLERANCE := 8.0
+const PROGRESS_TOLERANCE := 96.0
+const PATH_START_AFTER_FINISH := 52.0
+const PATH_END_BEFORE_FINISH := 18.0
 
 @export_range(30.0, 600.0, 5.0) var race_time_limit_seconds := 180.0
 
 @onready var track: RaceTrack = $Track
+@onready var lap_path: LapPath = $PreviousLapPath
 @onready var kart: PlayerKart = $Kart
 @onready var camera: Camera2D = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
+@onready var path_status_label: Label = $HUD/RacePanel/PathStatusLabel
 @onready var result_panel: ColorRect = $HUD/ResultPanel
 @onready var result_label: Label = $HUD/ResultPanel/ResultLabel
 
@@ -22,6 +26,8 @@ var _track_length := 0.0
 var _previous_offset := 0.0
 var _previous_local_position := Vector2.ZERO
 var _race_over := false
+var _path_recording_armed := false
+var _last_crossing_notice_at := -1000.0
 
 
 func _ready() -> void:
@@ -30,6 +36,8 @@ func _ready() -> void:
 	kart.global_rotation = track.global_rotation + start.get_rotation()
 	camera.target = kart
 	camera.snap_to_target()
+	lap_path.begin_lap()
+	lap_path.crossed.connect(_on_path_crossed)
 
 	_checkpoint_offsets = track.get_checkpoint_offsets()
 	_track_length = track.get_course_length()
@@ -51,6 +59,7 @@ func _physics_process(delta: float) -> void:
 
 	var local_position := track.to_local(kart.global_position)
 	var current_offset := track.get_progress_offset(kart.global_position)
+	var wrapped_forward := current_offset < _previous_offset - _track_length * 0.5
 	var progress := current_offset - _previous_offset
 	if progress > _track_length * 0.5:
 		progress -= _track_length
@@ -60,7 +69,16 @@ func _physics_process(delta: float) -> void:
 	var movement := local_position - _previous_local_position
 	var forward := track.get_forward_at_offset(current_offset)
 	if progress > 0.0 and progress <= movement.length() * 1.5 + PROGRESS_TOLERANCE and movement.dot(forward) > 0.0:
+		var laps_before := completed_laps
 		_check_gate_crossing(progress)
+		if wrapped_forward:
+			_path_recording_armed = true
+			if completed_laps == laps_before:
+				lap_path.begin_lap()
+
+	if _path_recording_armed and current_offset >= PATH_START_AFTER_FINISH and current_offset <= _track_length - PATH_END_BEFORE_FINISH:
+		lap_path.record_position(kart.global_position)
+	lap_path.update_contact(kart.global_transform, race_time_limit_seconds - time_left)
 
 	_previous_offset = current_offset
 	_previous_local_position = local_position
@@ -80,6 +98,7 @@ func _check_gate_crossing(progress: float) -> void:
 		return
 
 	completed_laps += 1
+	lap_path.complete_lap()
 	_next_checkpoint = 0
 	if completed_laps >= TOTAL_LAPS:
 		_end_race(true)
@@ -106,6 +125,18 @@ func _input(event: InputEvent) -> void:
 func _update_hud() -> void:
 	lap_label.text = "LAP %d / %d" % [mini(completed_laps + 1, TOTAL_LAPS), TOTAL_LAPS]
 	time_label.text = "TIME %s" % _format_time(time_left)
+	if not lap_path.has_previous_path():
+		path_status_label.text = "PATH: RECORDING"
+	elif lap_path.is_following:
+		path_status_label.text = "PATH: FOLLOWING"
+	elif race_time_limit_seconds - time_left - _last_crossing_notice_at < 0.85:
+		path_status_label.text = "PATH: CROSSED"
+	else:
+		path_status_label.text = "PATH: OFF"
+
+
+func _on_path_crossed(_total_crossings: int) -> void:
+	_last_crossing_notice_at = race_time_limit_seconds - time_left
 
 
 func _format_time(seconds: float) -> String:

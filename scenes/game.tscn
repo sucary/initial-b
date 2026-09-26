@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://dww3cr5b8dlor" path="res://assets/sprites/keycap-l.png" id="9_keycap_l"]
 [ext_resource type="Texture2D" uid="uid://bsxmbbkxpcfna" path="res://assets/sprites/keycap-r.png" id="9_keycap_r"]
 [ext_resource type="FontFile" uid="uid://chpbs2pq6meuy" path="res://assets/fonts/kart-pixel.fnt" id="10_pixel_font"]
+[ext_resource type="Script" path="res://scripts/path.gd" id="11_lap_path"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
 size = Vector2(42, 22)
@@ -34,6 +35,9 @@ scale = Vector2(1.1, 1)
 texture = ExtResource("6_track_art")
 centered = false
 
+[node name="PreviousLapPath" type="Line2D" parent="."]
+texture_filter = 1
+script = ExtResource("11_lap_path")
 [node name="ObstaclePreview" type="Node2D" parent="." unique_id=316756219]
 
 [node name="TyreStack" type="Sprite2D" parent="ObstaclePreview" unique_id=2093028007]
@@ -241,7 +245,7 @@ horizontal_alignment = 1
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 290.0
-offset_bottom = 116.0
+offset_bottom = 154.0
 mouse_filter = 2
 color = Color(0.055, 0.065, 0.08, 0.78)
 
@@ -269,6 +273,17 @@ theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 24
 text = "TIME 03:00"
 
+[node name="PathStatusLabel" type="Label" parent="HUD/RacePanel"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 14.0
+offset_top = 90.0
+offset_right = 256.0
+offset_bottom = 124.0
+theme_override_colors/font_color = Color(0.82, 0.91, 0.96, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+text = "PATH: RECORDING"
 [node name="ResultPanel" type="ColorRect" parent="HUD" unique_id=585436228]
 visible = false
 anchors_preset = 8
