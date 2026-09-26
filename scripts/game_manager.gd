@@ -21,6 +21,7 @@ const TITLE_SCENE := "res://scenes/title.tscn"
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
 @onready var speed_dashboard: SpeedDashboard = $HUD/SpeedDashboard
 @onready var start_lights: StartLights = $HUD/StartLights
+@onready var minimap: Minimap = $HUD/ResultPanel/Lines/Minimap
 @onready var result_panel: ColorRect = $HUD/ResultPanel
 @onready var finished_label: Label = $HUD/ResultPanel/Lines/FinishedLabel
 @onready var time_up_label: Label = $HUD/ResultPanel/Lines/TimeUpLabel
@@ -39,6 +40,7 @@ var _path_recording_armed := false
 var path_effects := PathEffects.new()
 var _lap_started_at := 0.0
 var _racing := false
+var _lap_routes: Array[PackedVector2Array] = []
 
 
 func _ready() -> void:
@@ -53,6 +55,7 @@ func _ready() -> void:
 	lap_path.begin_lap()
 	lap_path.crossed.connect(_on_path_crossed)
 	course.build(track, randi(), $TrackArt)
+	minimap.setup(track)
 	course.item_box_taken.connect(path_effects.pick_up_item_box)
 
 	_checkpoint_offsets = track.get_checkpoint_offsets()
@@ -141,7 +144,10 @@ func _check_gate_crossing(progress: float) -> void:
 		return
 
 	completed_laps += 1
+	var recorded_route := lap_path.world_recording().size() >= 2
 	lap_path.complete_lap()
+	if recorded_route:
+		_lap_routes.append(lap_path.world_route())
 	course.respawn_item_boxes()
 	_next_checkpoint = 0
 	if completed_laps >= TOTAL_LAPS:
@@ -158,6 +164,11 @@ func _end_race(won: bool) -> void:
 	time_up_label.visible = not won
 	finish_time_label.visible = won
 	finish_time_label.text = _finish_time_template.replace("{time}", _format_time(time_left))
+	var routes := _lap_routes.duplicate()
+	var unfinished := lap_path.world_recording()
+	if not won and unfinished.size() >= 2:
+		routes.append(unfinished)
+	minimap.show_routes(routes)
 	_update_hud()
 
 

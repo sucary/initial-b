@@ -170,6 +170,14 @@ func complete_lap() -> void:
 	_reset_contact()
 
 
+func world_route() -> PackedVector2Array:
+	return global_transform * points
+
+
+func world_recording() -> PackedVector2Array:
+	return global_transform * _recording
+
+
 func has_previous_path() -> bool:
 	return points.size() >= 2
 

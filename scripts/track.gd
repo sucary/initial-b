@@ -10,6 +10,7 @@ const FINISH_LIGHT := Color(0.94, 0.94, 0.90)
 var center_curve := Curve2D.new()
 var centerline := PackedVector2Array()
 var _boundary_segments := PackedVector2Array()
+var _contours: Array[PackedVector2Array] = []
 
 
 func _ready() -> void:
@@ -25,6 +26,7 @@ func _ready() -> void:
 	if contours.size() != 2:
 		push_error("Track requires an outer and inner road boundary")
 		return
+	_contours = contours
 	_build_art(contours)
 	_build_walls(contours)
 
@@ -63,6 +65,13 @@ func _distance_to_wall(origin: Vector2, direction: Vector2) -> float:
 		if hit != null:
 			nearest = minf(nearest, origin.distance_to(hit))
 	return nearest
+
+
+func world_contours() -> Array[PackedVector2Array]:
+	var contours: Array[PackedVector2Array] = []
+	for contour in _contours:
+		contours.append(global_transform * contour)
+	return contours
 
 
 func get_checkpoint_offsets() -> PackedFloat32Array:
