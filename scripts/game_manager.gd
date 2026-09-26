@@ -13,11 +13,13 @@ const SHADOW_FADE_SECONDS := 0.3
 @onready var lap_path: LapPath = $PreviousLapPath
 @onready var kart: PlayerKart = $Kart
 @onready var kart_shadow: Sprite2D = $KartShadow
+@onready var start_grid: StartGrid = $StartGrid
 @onready var course: CourseObjects = $Course
 @onready var camera: Camera2D = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
 @onready var speed_dashboard: SpeedDashboard = $HUD/SpeedDashboard
+@onready var start_lights: StartLights = $HUD/StartLights
 @onready var result_panel: ColorRect = $HUD/ResultPanel
 @onready var result_label: Label = $HUD/ResultPanel/ResultLabel
 
@@ -32,14 +34,18 @@ var _race_over := false
 var _path_recording_armed := false
 var path_effects := PathEffects.new()
 var _lap_started_at := 0.0
+var _racing := false
 
 
 func _ready() -> void:
-	var start := track.get_start_transform()
-	kart.global_position = track.to_global(start.origin)
-	kart.global_rotation = track.global_rotation + start.get_rotation()
+	start_grid.build(track)
+	var pole := start_grid.slot_transform(0)
+	kart.global_position = pole.origin
+	kart.global_rotation = pole.get_rotation()
 	camera.target = kart
 	camera.snap_to_target()
+	kart.set_physics_process(false)
+	start_lights.go.connect(_on_go)
 	lap_path.begin_lap()
 	lap_path.crossed.connect(_on_path_crossed)
 	course.build(track, randi(), $TrackArt)
@@ -56,7 +62,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _race_over:
+	if _race_over or not _racing:
 		return
 
 	time_left = maxf(0.0, time_left - delta)
@@ -96,6 +102,11 @@ func _physics_process(delta: float) -> void:
 	_previous_offset = current_offset
 	_previous_local_position = local_position
 	_update_hud()
+
+
+func _on_go() -> void:
+	_racing = true
+	kart.set_physics_process(true)
 
 
 func _elapsed() -> float:

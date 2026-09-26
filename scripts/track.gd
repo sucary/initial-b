@@ -29,10 +29,6 @@ func _ready() -> void:
 	_build_walls(contours)
 
 
-func get_start_transform() -> Transform2D:
-	return center_curve.sample_baked_with_rotation(center_curve.get_baked_length() - 110.0)
-
-
 func get_course_length() -> float:
 	return center_curve.get_baked_length()
 

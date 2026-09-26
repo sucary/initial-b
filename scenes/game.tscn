@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://scripts/path.gd" id="11_lap_path"]
 [ext_resource type="Script" path="res://scripts/course_objects.gd" id="12_course"]
 [ext_resource type="Script" path="res://scripts/speed_dashboard.gd" id="13_speed_dashboard"]
+[ext_resource type="Script" path="res://scripts/start_lights.gd" id="14_start_lights"]
+[ext_resource type="Script" path="res://scripts/start_grid.gd" id="15_start_grid"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
 size = Vector2(60, 32)
@@ -34,6 +36,9 @@ position = Vector2(-336, 0)
 scale = Vector2(1.1, 1)
 texture = ExtResource("6_track_art")
 centered = false
+
+[node name="StartGrid" type="Node2D" parent="."]
+script = ExtResource("15_start_grid")
 
 [node name="PreviousLapPath" type="Line2D" parent="."]
 texture_filter = 1
@@ -275,6 +280,18 @@ offset_right = -20.0
 offset_bottom = 270.0
 mouse_filter = 2
 script = ExtResource("13_speed_dashboard")
+
+[node name="StartLights" type="HBoxContainer" parent="HUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 24.0
+offset_right = 160.0
+offset_bottom = 120.0
+mouse_filter = 2
+alignment = 1
+script = ExtResource("14_start_lights")
 
 [node name="ResultPanel" type="ColorRect" parent="HUD" unique_id=585436228]
 visible = false
