@@ -15,7 +15,7 @@ const SHADOW_FADE_SECONDS := 0.3
 @onready var kart_shadow: Sprite2D = $KartShadow
 @onready var start_grid: StartGrid = $StartGrid
 @onready var course: CourseObjects = $Course
-@onready var camera: Camera2D = $Camera
+@onready var camera: RaceCamera = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
 @onready var speed_dashboard: SpeedDashboard = $HUD/SpeedDashboard
@@ -107,6 +107,7 @@ func _physics_process(delta: float) -> void:
 func _on_go() -> void:
 	_racing = true
 	kart.set_physics_process(true)
+	camera.follows_input = true
 
 
 func _elapsed() -> float:
@@ -147,6 +148,7 @@ func _end_race(won: bool) -> void:
 	_race_over = true
 	kart.velocity = Vector2.ZERO
 	kart.set_physics_process(false)
+	camera.follows_input = false
 	result_panel.visible = true
 	if won:
 		var elapsed := race_time_limit_seconds - time_left
