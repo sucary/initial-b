@@ -5,16 +5,19 @@ const TOTAL_LAPS := 3
 const PROGRESS_TOLERANCE := 96.0
 const PATH_START_AFTER_FINISH := 52.0
 const PATH_END_BEFORE_FINISH := 18.0
+const SHADOW_FADE_SECONDS := 0.3
 
 @export_range(30.0, 600.0, 5.0) var race_time_limit_seconds := 180.0
 
 @onready var track: RaceTrack = $Track
 @onready var lap_path: LapPath = $PreviousLapPath
 @onready var kart: PlayerKart = $Kart
+@onready var kart_shadow: Sprite2D = $KartShadow
 @onready var camera: Camera2D = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
 @onready var time_label: Label = $HUD/RacePanel/TimeLabel
 @onready var path_status_label: Label = $HUD/RacePanel/PathStatusLabel
+@onready var path_effect_label: Label = $HUD/RacePanel/PathEffectLabel
 @onready var result_panel: ColorRect = $HUD/ResultPanel
 @onready var result_label: Label = $HUD/ResultPanel/ResultLabel
 
@@ -27,7 +30,8 @@ var _previous_offset := 0.0
 var _previous_local_position := Vector2.ZERO
 var _race_over := false
 var _path_recording_armed := false
-var _last_crossing_notice_at := -1000.0
+var path_effects := PathEffects.new()
+var _lap_started_at := 0.0
 
 
 func _ready() -> void:
@@ -45,6 +49,7 @@ func _ready() -> void:
 	_previous_offset = track.get_progress_offset(kart.global_position)
 	time_left = race_time_limit_seconds
 	result_panel.visible = false
+	_update_shadow(0.0)
 	_update_hud()
 
 
@@ -73,16 +78,37 @@ func _physics_process(delta: float) -> void:
 		_check_gate_crossing(progress)
 		if wrapped_forward:
 			_path_recording_armed = true
+			_lap_started_at = _elapsed()
 			if completed_laps == laps_before:
 				lap_path.begin_lap()
 
+	var lap_time := _elapsed() - _lap_started_at
 	if _path_recording_armed and current_offset >= PATH_START_AFTER_FINISH and current_offset <= _track_length - PATH_END_BEFORE_FINISH:
-		lap_path.record_position(kart.global_position)
+		lap_path.record_position(kart.global_position, lap_time)
+	_update_shadow(lap_time)
 	lap_path.update_contact(kart.global_transform, race_time_limit_seconds - time_left)
+	if lap_path.has_previous_path():
+		path_effects.advance(delta, lap_path.is_following)
+	kart.set_path_modifiers(path_effects.speed_scale(), path_effects.acceleration_scale(), path_effects.turn_scale())
+	lap_path.set_appearance(path_effects.state, path_effects.is_active())
 
 	_previous_offset = current_offset
 	_previous_local_position = local_position
 	_update_hud()
+
+
+func _elapsed() -> float:
+	return race_time_limit_seconds - time_left
+
+
+func _update_shadow(lap_time: float) -> void:
+	var start := lap_path.replay_start_time()
+	var end := lap_path.replay_end_time()
+	kart_shadow.visible = lap_time >= start and lap_time <= end
+	if not kart_shadow.visible:
+		return
+	kart_shadow.global_transform = lap_path.replay_transform(lap_time)
+	kart_shadow.modulate.a = clampf(minf(lap_time - start, end - lap_time) / SHADOW_FADE_SECONDS, 0.0, 1.0)
 
 
 func _check_gate_crossing(progress: float) -> void:
@@ -125,18 +151,21 @@ func _input(event: InputEvent) -> void:
 func _update_hud() -> void:
 	lap_label.text = "LAP %d / %d" % [mini(completed_laps + 1, TOTAL_LAPS), TOTAL_LAPS]
 	time_label.text = "TIME %s" % _format_time(time_left)
+	path_effect_label.text = ""
 	if not lap_path.has_previous_path():
 		path_status_label.text = "PATH: RECORDING"
-	elif lap_path.is_following:
-		path_status_label.text = "PATH: FOLLOWING"
-	elif race_time_limit_seconds - time_left - _last_crossing_notice_at < 0.85:
-		path_status_label.text = "PATH: CROSSED"
-	else:
-		path_status_label.text = "PATH: OFF"
+		return
+	var multiplier := path_effects.effect_multiplier()
+	var strength := "X%.1f" % multiplier if multiplier > 0.0 else "OFF"
+	path_status_label.text = "PATH: %s %s" % [path_effects.state_name(), strength]
+	if path_effects.is_braiding():
+		path_effect_label.text = "BRAID X%.1f %.1fS" % [path_effects.braid_boost(), path_effects.window_left]
+	elif path_effects.window_left > 0.0:
+		path_effect_label.text = "CROSSED %.1fS" % path_effects.window_left
 
 
 func _on_path_crossed(_total_crossings: int) -> void:
-	_last_crossing_notice_at = race_time_limit_seconds - time_left
+	path_effects.register_crossing()
 
 
 func _format_time(seconds: float) -> String:

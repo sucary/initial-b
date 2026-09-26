@@ -3,8 +3,11 @@ class_name LapPath
 
 signal crossed(total_crossings: int)
 
-const NORMAL_TEXTURE: Texture2D = preload("res://assets/sprites/path-ice-normal.png")
-const ACTIVE_TEXTURE: Texture2D = preload("res://assets/sprites/path-ice-active.png")
+const STATE_TEXTURES := {
+	PathEffects.State.ICE: [preload("res://assets/sprites/path-ice-normal.png"), preload("res://assets/sprites/path-ice-active.png")],
+	PathEffects.State.MUD: [preload("res://assets/sprites/path-mud-normal.png"), preload("res://assets/sprites/path-mud-active.png")],
+	PathEffects.State.LIGHTNING: [preload("res://assets/sprites/path-lightning-normal.png"), preload("res://assets/sprites/path-lightning-active.png")],
+}
 const TEXTURE_COLUMNS := 64.0
 const TEXTURE_ROWS := 32.0
 const TEXTURE_CORE_ROWS := 16.0
@@ -28,6 +31,9 @@ var _reveal_elapsed := 0.0
 var _visible_end_segment := 0
 var _visible_end_point := Vector2.ZERO
 var _recording := PackedVector2Array()
+var _recording_times := PackedFloat32Array()
+var _replay_times := PackedFloat32Array()
+var _replay_fractions := PackedFloat32Array()
 var _segment_cells: Dictionary = {}
 var _center_inside := false
 var _last_outside_side := 0.0
@@ -36,14 +42,13 @@ var _entry_time := 0.0
 var _entry_anchor := Vector2.ZERO
 var _entry_tangent := Vector2.RIGHT
 var _entry_near_end := false
-var _last_crossing_time := -1000.0
 
 
 func _ready() -> void:
 	width = path_width * TEXTURE_ROWS / TEXTURE_CORE_ROWS
 	default_color = Color.TRANSPARENT
 	_ribbon = MeshInstance2D.new()
-	_ribbon.texture = NORMAL_TEXTURE
+	_ribbon.texture = STATE_TEXTURES[PathEffects.State.ICE][0]
 	_ribbon.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	_ribbon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var ribbon_shader := Shader.new()
@@ -93,18 +98,19 @@ func _process(delta: float) -> void:
 
 func begin_lap() -> void:
 	_recording = PackedVector2Array()
+	_recording_times = PackedFloat32Array()
 
 
-func record_position(world_position: Vector2) -> void:
+func record_position(world_position: Vector2, lap_time: float) -> void:
 	var local_position := to_local(world_position)
-	if _recording.is_empty():
+	if _recording.is_empty() or _recording[-1].distance_to(local_position) >= sample_spacing:
 		_recording.append(local_position)
-	elif _recording[-1].distance_to(local_position) >= sample_spacing:
-		_recording.append(local_position)
+		_recording_times.append(lap_time)
 
 
 func complete_lap() -> void:
 	if _recording.size() >= 2:
+		_store_replay_timing()
 		points = _smoothed_route(_recording)
 		_build_ribbon()
 		_build_segment_cells()
@@ -114,7 +120,7 @@ func complete_lap() -> void:
 		_visible_end_point = points[0]
 		_ribbon_material.set_shader_parameter("reveal_distance", 0.0)
 		visible = true
-	_recording = PackedVector2Array()
+	begin_lap()
 	_reset_contact()
 
 
@@ -142,7 +148,6 @@ func update_contact(kart_transform: Transform2D, elapsed_seconds: float) -> void
 		var exit_side := signf(_entry_tangent.cross(center - _entry_anchor))
 		if _entry_side * exit_side < 0.0 and elapsed_seconds - _entry_time < crossing_window_seconds and not _entry_near_end and not _near_path_end(center):
 			total_crossings += 1
-			_last_crossing_time = elapsed_seconds
 			crossed.emit(total_crossings)
 
 	if not center_inside:
@@ -152,7 +157,32 @@ func update_contact(kart_transform: Transform2D, elapsed_seconds: float) -> void
 
 	_center_inside = center_inside
 	is_following = center_inside
-	_ribbon.texture = ACTIVE_TEXTURE if is_following or elapsed_seconds - _last_crossing_time < 0.65 else NORMAL_TEXTURE
+
+
+func replay_start_time() -> float:
+	return _replay_times[0] if has_previous_path() else INF
+
+
+func replay_end_time() -> float:
+	return _replay_times[-1] if has_previous_path() else -INF
+
+
+func replay_transform(lap_time: float) -> Transform2D:
+	var index := clampi(_replay_times.bsearch(lap_time) - 1, 0, _replay_times.size() - 2)
+	var span := maxf(_replay_times[index + 1] - _replay_times[index], 0.0001)
+	var weight := clampf((lap_time - _replay_times[index]) / span, 0.0, 1.0)
+	var fraction := lerpf(_replay_fractions[index], _replay_fractions[index + 1], weight)
+	var distance := fraction * _full_path_length
+	var segment := clampi(_distance_at_point.bsearch(distance) - 1, 0, points.size() - 2)
+	var segment_length := maxf(_distance_at_point[segment + 1] - _distance_at_point[segment], 0.0001)
+	var along := clampf((distance - _distance_at_point[segment]) / segment_length, 0.0, 1.0)
+	var start := points[segment]
+	var end := points[segment + 1]
+	return global_transform * Transform2D((end - start).angle(), start.lerp(end, along))
+
+
+func set_appearance(state: PathEffects.State, active: bool) -> void:
+	_ribbon.texture = STATE_TEXTURES[state][1 if active else 0]
 
 
 func _smoothed_route(route: PackedVector2Array) -> PackedVector2Array:
@@ -179,6 +209,17 @@ func _smoothed_route(route: PackedVector2Array) -> PackedVector2Array:
 		next.append(smooth[-1])
 		smooth = next
 	return smooth
+
+
+func _store_replay_timing() -> void:
+	_replay_times = _recording_times.duplicate()
+	_replay_fractions = PackedFloat32Array([0.0])
+	var travelled := 0.0
+	for index in range(1, _recording.size()):
+		travelled += _recording[index - 1].distance_to(_recording[index])
+		_replay_fractions.append(travelled)
+	for index in range(_replay_fractions.size()):
+		_replay_fractions[index] /= maxf(travelled, 0.0001)
 
 
 func _build_ribbon() -> void:
@@ -287,4 +328,3 @@ func _reset_contact() -> void:
 	_last_outside_side = 0.0
 	_entry_side = 0.0
 	is_following = false
-	_ribbon.texture = NORMAL_TEXTURE

@@ -10,6 +10,22 @@ const NORMAL_GRIP := 8.0
 const DRIFT_GRIP := 1.8
 const NORMAL_TURN_RATE := 2.6
 const DRIFT_TURN_RATE := 3.5
+const MAX_SPEED := 780.0
+const OVERSPEED_DRAG := 520.0
+
+var speed_scale := 1.0
+var acceleration_scale := 1.0
+var turn_scale := 1.0
+
+
+func set_path_modifiers(new_speed_scale: float, new_acceleration_scale: float, new_turn_scale: float) -> void:
+	speed_scale = new_speed_scale
+	acceleration_scale = new_acceleration_scale
+	turn_scale = new_turn_scale
+
+
+func top_speed() -> float:
+	return minf(TOP_SPEED * speed_scale, MAX_SPEED)
 
 
 func _ready() -> void:
@@ -19,6 +35,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var starting_speed := velocity.length()
 	var forward := Vector2.RIGHT.rotated(rotation)
 	var longitudinal_speed := velocity.dot(forward)
 	var throttle := Input.get_action_strength("accelerate")
@@ -26,7 +43,7 @@ func _physics_process(delta: float) -> void:
 	var drifting := Input.is_action_pressed("handbrake")
 
 	if throttle > 0.0:
-		velocity += forward * FORWARD_ACCELERATION * throttle * delta
+		velocity += forward * FORWARD_ACCELERATION * acceleration_scale * throttle * delta
 	if brake > 0.0:
 		if longitudinal_speed > 25.0:
 			velocity = velocity.move_toward(Vector2.ZERO, BRAKE_FORCE * brake * delta)
@@ -39,11 +56,12 @@ func _physics_process(delta: float) -> void:
 	var speed_factor := clampf(absf(longitudinal_speed) / 180.0, 0.0, 1.0)
 	if absf(longitudinal_speed) > 8.0:
 		var turn_rate := DRIFT_TURN_RATE if drifting else NORMAL_TURN_RATE
-		rotation += steer * turn_rate * speed_factor * signf(longitudinal_speed) * delta
+		rotation += steer * turn_rate * turn_scale * speed_factor * signf(longitudinal_speed) * delta
 
 	forward = Vector2.RIGHT.rotated(rotation)
 	var sideways := forward.orthogonal()
 	var grip := DRIFT_GRIP if drifting else NORMAL_GRIP
 	velocity -= sideways * velocity.dot(sideways) * minf(grip * delta, 1.0)
-	velocity = velocity.limit_length(TOP_SPEED)
+	var allowed_speed := maxf(top_speed(), starting_speed - OVERSPEED_DRAG * delta)
+	velocity = velocity.limit_length(minf(allowed_speed, MAX_SPEED))
 	move_and_slide()

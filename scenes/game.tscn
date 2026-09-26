@@ -55,16 +55,16 @@ visible = false
 scale = Vector2(2, 2)
 script = ExtResource("2_track")
 
+[node name="KartShadow" type="Sprite2D" parent="." unique_id=372536702]
+visible = false
+texture_filter = 1
+texture = ExtResource("5_kart_shadow")
+
 [node name="Kart" type="CharacterBody2D" parent="." unique_id=593377400]
 script = ExtResource("3_kart")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Kart" unique_id=277379229]
 shape = SubResource("RectangleShape2D_kart")
-
-[node name="KartShadow" type="Sprite2D" parent="Kart" unique_id=372536702]
-texture_filter = 1
-position = Vector2(3, 4)
-texture = ExtResource("5_kart_shadow")
 
 [node name="KartSprite" type="Sprite2D" parent="Kart" unique_id=106395585]
 texture_filter = 1
@@ -245,7 +245,7 @@ horizontal_alignment = 1
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 290.0
-offset_bottom = 154.0
+offset_bottom = 160.0
 mouse_filter = 2
 color = Color(0.055, 0.065, 0.08, 0.78)
 
@@ -284,6 +284,18 @@ theme_override_colors/font_color = Color(0.82, 0.91, 0.96, 1)
 theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 16
 text = "PATH: RECORDING"
+
+[node name="PathEffectLabel" type="Label" parent="HUD/RacePanel"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 14.0
+offset_top = 116.0
+offset_right = 256.0
+offset_bottom = 150.0
+theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
+theme_override_fonts/font = ExtResource("10_pixel_font")
+theme_override_font_sizes/font_size = 16
+
 [node name="ResultPanel" type="ColorRect" parent="HUD" unique_id=585436228]
 visible = false
 anchors_preset = 8
