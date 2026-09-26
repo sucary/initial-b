@@ -8,7 +8,7 @@ const PATH_END_BEFORE_FINISH := 18.0
 const SHADOW_FADE_SECONDS := 0.3
 const TITLE_SCENE := "res://scenes/title.tscn"
 
-@export_range(30.0, 600.0, 5.0) var race_time_limit_seconds := 180.0
+@export_range(30.0, 600.0, 5.0) var race_time_limit_seconds := 120.0
 
 @onready var track: RaceTrack = $Track
 @onready var lap_path: LapPath = $PreviousLapPath

@@ -177,7 +177,7 @@ offset_bottom = 112.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 16
-text = "H BREAK"
+text = "H BRAKE"
 horizontal_alignment = 1
 
 [node name="KeyL" type="TextureRect" parent="HUD/KeybindHUD" unique_id=1814115210]
@@ -268,7 +268,7 @@ offset_bottom = 82.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 24
-text = "TIME 03:00"
+text = "TIME 02:00"
 
 [node name="SpeedDashboard" type="Control" parent="HUD" unique_id=577834521]
 layout_mode = 3

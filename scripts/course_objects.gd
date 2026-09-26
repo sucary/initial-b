@@ -64,6 +64,7 @@ func _hard_obstacle(data: Dictionary) -> StaticBody2D:
 	var body := StaticBody2D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
+	body.add_to_group(PlayerKart.HARD_OBSTACLE_GROUP)
 	body.position = data.position
 	body.rotation = data.rotation
 	var shape := CollisionShape2D.new()

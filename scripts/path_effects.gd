@@ -8,22 +8,23 @@ enum Source { ITEM_BOX, BRAID, TIMER }
 
 const BRAID_WINDOW_SECONDS := 2.5
 const STATE_TIMER_SECONDS := 10.0
-const CROSSING_MULTIPLIER_STEP := 0.5
+const BRAID_MAX_STACK := 10
 const MAX_EFFECT_MULTIPLIER := 3.0
+const CROSSING_MULTIPLIER_STEP := (MAX_EFFECT_MULTIPLIER - 1.0) / BRAID_MAX_STACK
+const MAX_BRAID_BOOST := 1.25
+const BRAID_BOOST_STEP := (MAX_BRAID_BOOST - 1.0) / (BRAID_MAX_STACK - 1)
 const FOLLOW_DECAY_PER_SECOND := 4.0
 const STATE_BLEND_SECONDS := 0.3
-const MUD_SLOW_ONSET_PER_SECOND := 2.0
-const MUD_RECOVERY_PER_SECOND := 0.35
-const BRAID_BOOST_STEP := 0.1
-const MAX_BRAID_BOOST := 1.4
-const BRAID_THRESHOLD_MIN := 5
-const BRAID_THRESHOLD_MAX := 7
+const BRAID_THRESHOLD_MIN := 10
+const BRAID_THRESHOLD_MAX := 12
 const ICE_TURN_PER_MULTIPLIER := 0.3
-const MUD_SPEED_PER_MULTIPLIER := 0.18
+const MUD_FIRST_HIT := 0.25
+const MUD_STACK_HIT := 0.08
+const MUD_RECOVERY_SECONDS := BRAID_WINDOW_SECONDS
 const MUD_TURN_PER_MULTIPLIER := 0.2
 const MUD_MIN_SCALE := 0.4
-const LIGHTNING_ACCELERATION_PER_MULTIPLIER := 0.5
-const LIGHTNING_SPEED_PER_MULTIPLIER := 0.06
+const LIGHTNING_ACCELERATION_PER_MULTIPLIER := 1.0
+const LIGHTNING_SPEED_PER_MULTIPLIER := 1.0 / 9.0
 
 var state: State = State.ICE
 var effect_crossings := 0
@@ -40,6 +41,8 @@ var _rng := RandomNumberGenerator.new()
 var _item_box_pending := false
 var _item_box_state := -1
 var _blend_from := Vector3.ONE
+var _mud_recover_left := 0.0
+var _mud_recover_from := 1.0
 
 
 func _init(seed_value: int = -1) -> void:
@@ -67,7 +70,13 @@ func pick_up_item_box(box_state: int = -1) -> void:
 
 
 func advance(delta: float, is_following: bool, timer_running: bool = true) -> void:
+	var entered_path := is_following and not following
 	following = is_following
+	if _mud_recover_left > 0.0:
+		_mud_recover_left = maxf(_mud_recover_left - delta, 0.0)
+		mud_slow = lerpf(1.0, _mud_recover_from, _mud_recover_left / MUD_RECOVERY_SECONDS)
+	if entered_path:
+		_mud_hit()
 	blend_left = maxf(blend_left - delta, 0.0)
 	decaying_multiplier = move_toward(decaying_multiplier, 1.0, FOLLOW_DECAY_PER_SECOND * delta)
 	if window_left > 0.0:
@@ -93,10 +102,6 @@ func advance(delta: float, is_following: bool, timer_running: bool = true) -> vo
 	elif state_timer >= STATE_TIMER_SECONDS:
 		_change_state(_random_other_state(), Source.TIMER)
 
-	var mud_target := _mud_speed(effect_multiplier()) if state == State.MUD else 1.0
-	var mud_rate := MUD_SLOW_ONSET_PER_SECOND if mud_target < mud_slow else MUD_RECOVERY_PER_SECOND
-	mud_slow = move_toward(mud_slow, mud_target, mud_rate * delta)
-
 
 func is_active() -> bool:
 	return effect_multiplier() > 0.0
@@ -117,7 +122,7 @@ func _crossing_multiplier() -> float:
 
 
 func is_maxed() -> bool:
-	return window_left > 0.0 and _crossing_multiplier() >= MAX_EFFECT_MULTIPLIER and braid_boost() >= MAX_BRAID_BOOST
+	return window_left > 0.0 and effect_crossings >= BRAID_MAX_STACK
 
 
 func braid_boost() -> float:
@@ -158,13 +163,19 @@ func _state_scales(for_state: State, multiplier: float) -> Vector3:
 	return Vector3.ONE
 
 
-func _mud_speed(multiplier: float) -> float:
-	return maxf(1.0 - MUD_SPEED_PER_MULTIPLIER * multiplier, MUD_MIN_SCALE)
+func _mud_hit() -> void:
+	if state != State.MUD:
+		return
+	var depth := MUD_FIRST_HIT if _mud_recover_left <= 0.0 else MUD_STACK_HIT
+	mud_slow = maxf(mud_slow - depth, MUD_MIN_SCALE)
+	_mud_recover_from = mud_slow
+	_mud_recover_left = MUD_RECOVERY_SECONDS
 
 
 func _change_state(new_state: int, source: Source) -> void:
 	_blend_from = _blended_scales()
 	blend_left = STATE_BLEND_SECONDS
+	var previous_state := state
 	state = new_state as State
 	state_timer = 0.0
 	if source != Source.ITEM_BOX:
@@ -172,6 +183,8 @@ func _change_state(new_state: int, source: Source) -> void:
 		braid_crossings = 0
 		window_left = 0.0
 		decaying_multiplier = 1.0
+	if following and previous_state != State.MUD:
+		_mud_hit()
 	state_changed.emit(state, source)
 
 
