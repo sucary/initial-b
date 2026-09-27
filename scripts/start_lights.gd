@@ -2,6 +2,7 @@ extends HBoxContainer
 class_name StartLights
 
 signal go
+signal red_lit
 
 const RED: Texture2D = preload("res://assets/sprites/start-light-red.png")
 const GREEN: Texture2D = preload("res://assets/sprites/start-light-green.png")
@@ -17,6 +18,7 @@ var elapsed := 0.0
 var started := false
 
 var _lamps: Array[TextureRect] = []
+var _last_lit_count := 0
 
 
 func green_time() -> float:
@@ -58,6 +60,12 @@ func _process(delta: float) -> void:
 
 
 func _update_lamps() -> void:
+	var previous_count := _last_lit_count
+	var current_count := lit_count()
+	if current_count > previous_count and not started:
+		for _index in range(previous_count, current_count):
+			red_lit.emit()
+	_last_lit_count = current_count
 	if not started and elapsed >= green_time():
 		started = true
 		go.emit()

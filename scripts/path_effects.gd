@@ -21,7 +21,6 @@ const ICE_TURN_PER_MULTIPLIER := 0.3
 const MUD_FIRST_HIT := 0.25
 const MUD_STACK_HIT := 0.08
 const MUD_RECOVERY_SECONDS := BRAID_WINDOW_SECONDS
-const MUD_TURN_PER_MULTIPLIER := 0.2
 const MUD_MIN_SCALE := 0.4
 const LIGHTNING_ACCELERATION_PER_MULTIPLIER := 1.0
 const LIGHTNING_SPEED_PER_MULTIPLIER := 1.0 / 9.0
@@ -154,8 +153,6 @@ func _state_scales(for_state: State, multiplier: float) -> Vector3:
 	match for_state:
 		State.ICE:
 			return Vector3(1.0, 1.0, 1.0 + ICE_TURN_PER_MULTIPLIER * multiplier)
-		State.MUD:
-			return Vector3(1.0, 1.0, maxf(1.0 - MUD_TURN_PER_MULTIPLIER * multiplier, MUD_MIN_SCALE))
 		State.LIGHTNING:
 			var lightning_speed := 1.0 + LIGHTNING_SPEED_PER_MULTIPLIER * multiplier
 			var lightning_acceleration := 1.0 + LIGHTNING_ACCELERATION_PER_MULTIPLIER * multiplier

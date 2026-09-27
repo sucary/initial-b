@@ -15,6 +15,7 @@ const TITLE_SCENE := "res://scenes/title.tscn"
 @onready var kart: PlayerKart = $Kart
 @onready var kart_shadow: Sprite2D = $KartShadow
 @onready var start_grid: StartGrid = $StartGrid
+@onready var skid_marks: SkidMarks = $SkidMarks
 @onready var course: CourseObjects = $Course
 @onready var camera: RaceCamera = $Camera
 @onready var lap_label: Label = $HUD/RacePanel/LapLabel
@@ -38,12 +39,15 @@ var _previous_local_position := Vector2.ZERO
 var _race_over := false
 var _path_recording_armed := false
 var path_effects := PathEffects.new()
+var audio: RaceAudio
 var _lap_started_at := 0.0
 var _racing := false
 var _lap_routes: Array[PackedVector2Array] = []
 
 
 func _ready() -> void:
+	audio = RaceAudio.new()
+	add_child(audio)
 	start_grid.build(track)
 	var pole := start_grid.slot_transform(0)
 	kart.global_position = pole.origin
@@ -52,11 +56,16 @@ func _ready() -> void:
 	camera.snap_to_target()
 	kart.set_physics_process(false)
 	start_lights.go.connect(_on_go)
+	start_lights.red_lit.connect(func(): audio.play("countdown"))
+	kart.tyre_hit.connect(func(): audio.play_collision("tyre_hit"))
+	kart.barrier_hit.connect(func(): audio.play_collision("barrier_hit"))
+	kart.curb_hit.connect(func(): audio.play_collision("curb_hit"))
+	path_effects.state_changed.connect(_on_state_changed)
 	lap_path.begin_lap()
 	lap_path.crossed.connect(_on_path_crossed)
 	course.build(track, randi(), $TrackArt)
 	minimap.setup(track)
-	course.item_box_taken.connect(path_effects.pick_up_item_box)
+	course.item_box_taken.connect(_on_item_box_taken)
 
 	_checkpoint_offsets = track.get_checkpoint_offsets()
 	_track_length = track.get_course_length()
@@ -102,6 +111,12 @@ func _physics_process(delta: float) -> void:
 		lap_path.record_position(kart.global_position, lap_time)
 	_update_shadow(lap_time)
 	lap_path.update_contact(kart.global_transform, race_time_limit_seconds - time_left)
+	if kart.skidding:
+		var wheels := kart.rear_wheels()
+		skid_marks.add_marks(wheels[0], wheels[1])
+	else:
+		skid_marks.end_stroke()
+	audio.update_kart(kart.velocity.length(), kart.top_speed(), Input.get_action_strength("accelerate"), kart.skidding, kart.curb_rubbing, delta)
 	path_effects.advance(delta, lap_path.is_following, lap_path.has_previous_path())
 	kart.set_path_modifiers(path_effects.speed_scale(), path_effects.acceleration_scale(), path_effects.turn_scale())
 	lap_path.set_appearance(path_effects.state, path_effects.is_active())
@@ -112,6 +127,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_go() -> void:
+	audio.play("go")
+	audio.start_engine()
 	_racing = true
 	kart.set_physics_process(true)
 	camera.follows_input = true
@@ -144,6 +161,7 @@ func _check_gate_crossing(progress: float) -> void:
 		return
 
 	completed_laps += 1
+	audio.play("finish_line")
 	var recorded_route := lap_path.world_recording().size() >= 2
 	lap_path.complete_lap()
 	if recorded_route:
@@ -156,6 +174,11 @@ func _check_gate_crossing(progress: float) -> void:
 
 func _end_race(won: bool) -> void:
 	_race_over = true
+	audio.stop_engine()
+	if won:
+		audio.play_win_after_finish()
+	else:
+		audio.play("time_up")
 	kart.velocity = Vector2.ZERO
 	kart.set_physics_process(false)
 	camera.follows_input = false
@@ -187,6 +210,22 @@ func _update_hud() -> void:
 
 func _on_path_crossed(_total_crossings: int) -> void:
 	path_effects.register_crossing()
+	var crossing_pitch := minf(1.0 + path_effects.effect_crossings * 0.06, 1.55)
+	if path_effects.state == PathEffects.State.MUD:
+		crossing_pitch = maxf(1.0 - (path_effects.effect_crossings - 1) * 0.05, 0.55)
+	audio.play("crossing", crossing_pitch)
+
+
+func _on_item_box_taken(state: int) -> void:
+	audio.play("pickup")
+	path_effects.pick_up_item_box(state)
+
+
+func _on_state_changed(_state: int, source: int) -> void:
+	if source == PathEffects.Source.BRAID:
+		audio.play("state_change")
+	elif source == PathEffects.Source.TIMER:
+		audio.play("state_change", 1.0, -7.0)
 
 
 func _format_time(seconds: float) -> String:

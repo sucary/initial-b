@@ -1,6 +1,10 @@
 extends CharacterBody2D
 class_name PlayerKart
 
+signal tyre_hit
+signal barrier_hit
+signal curb_hit
+
 const TOP_SPEED := 600.0
 const FORWARD_ACCELERATION := 760.0
 const REVERSE_ACCELERATION := 310.0
@@ -13,6 +17,9 @@ const NORMAL_TURN_RATE := 2.6
 const DRIFT_TURN_RATE := 3.5
 const HANDBRAKE_DRAG := 0.8
 const HANDBRAKE_THROTTLE := 0.5
+const SKID_MIN_SPEED := 60.0
+const SKID_MIN_SLIP := 30.0
+const REAR_WHEEL_OFFSET := Vector2(-13, 12)
 const MAX_SPEED := 1000.0
 const OVERSPEED_DRAG := 520.0
 const BOUNCE := 0.35
@@ -26,11 +33,14 @@ const TURN_ACCELERATION_PENALTY := 1.0
 const SOFT_HIT_SPEED_KEPT := 0.55
 const SOFT_HIT_COOLDOWN := 0.35
 
+var skidding := false
+var curb_rubbing := false
 var speed_scale := 1.0
 var acceleration_scale := 1.0
 var turn_scale := 1.0
 
 var _soft_hit_cooldown := 0.0
+var _barrier_touching := false
 
 
 func hit_soft_obstacle() -> void:
@@ -38,6 +48,7 @@ func hit_soft_obstacle() -> void:
 		return
 	velocity *= SOFT_HIT_SPEED_KEPT
 	_soft_hit_cooldown = SOFT_HIT_COOLDOWN
+	tyre_hit.emit()
 
 
 func set_path_modifiers(new_speed_scale: float, new_acceleration_scale: float, new_turn_scale: float) -> void:
@@ -56,6 +67,10 @@ func turning_acceleration(turn_speed: float, speed: float) -> float:
 	var speed_ratio := minf(speed / TOP_SPEED, 1.0)
 	var sharpness := absf(turn_speed) / NORMAL_TURN_RATE
 	return clampf(1.0 - TURN_ACCELERATION_PENALTY * sharpness * speed_ratio * speed_ratio, 0.0, 1.0)
+
+
+func rear_wheels() -> PackedVector2Array:
+	return PackedVector2Array([to_global(REAR_WHEEL_OFFSET), to_global(REAR_WHEEL_OFFSET * Vector2(1, -1))])
 
 
 func top_speed() -> float:
@@ -88,6 +103,9 @@ func _fit_collision_to_sprite(sprite: Sprite2D, collision: CollisionShape2D) -> 
 
 func _physics_process(delta: float) -> void:
 	_soft_hit_cooldown = maxf(_soft_hit_cooldown - delta, 0.0)
+	var was_touching_barrier := _barrier_touching
+	_barrier_touching = false
+	curb_rubbing = false
 	var starting_speed := velocity.length()
 	var forward := Vector2.RIGHT.rotated(rotation)
 	var longitudinal_speed := velocity.dot(forward)
@@ -107,6 +125,8 @@ func _physics_process(delta: float) -> void:
 		velocity += forward * push * throttle * delta
 	if drifting:
 		velocity *= maxf(1.0 - HANDBRAKE_DRAG * delta, 0.0)
+	var slip := absf(velocity.dot(Vector2.RIGHT.rotated(rotation).orthogonal()))
+	skidding = drifting and velocity.length() > SKID_MIN_SPEED and slip > SKID_MIN_SLIP
 	if brake > 0.0:
 		if longitudinal_speed > 25.0:
 			velocity = velocity.move_toward(Vector2.ZERO, BRAKE_FORCE * brake * delta)
@@ -135,8 +155,20 @@ func _physics_process(delta: float) -> void:
 	var collision := get_slide_collision(0)
 	var normal := collision.get_normal()
 	var heading := Vector2.RIGHT.rotated(rotation)
+	var hit_barrier := collision.get_collider() is Node and (collision.get_collider() as Node).is_in_group(HARD_OBSTACLE_GROUP)
+	if hit_barrier:
+		_barrier_touching = true
 	if absf(heading.dot(normal)) > BOUNCE_MIN_FACING and moving_velocity.dot(normal) < 0.0:
-		var hit_obstacle := collision.get_collider() is Node and (collision.get_collider() as Node).is_in_group(HARD_OBSTACLE_GROUP)
-		velocity = moving_velocity.bounce(normal) * (HARD_OBSTACLE_BOUNCE if hit_obstacle else BOUNCE)
+		velocity = moving_velocity.bounce(normal) * (HARD_OBSTACLE_BOUNCE if hit_barrier else BOUNCE)
+		if moving_velocity.length() > 80.0:
+			if hit_barrier:
+				barrier_hit.emit()
+			else:
+				curb_hit.emit()
 	else:
 		velocity *= maxf(1.0 - SIDE_SCRAPE_DRAG * delta, 0.0)
+		if hit_barrier:
+			if not was_touching_barrier and moving_velocity.length() > 60.0:
+				barrier_hit.emit()
+		else:
+			curb_rubbing = moving_velocity.length() > 45.0

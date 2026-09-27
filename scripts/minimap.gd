@@ -4,6 +4,8 @@ class_name Minimap
 const FONT: FontFile = preload("res://assets/fonts/kart-pixel.fnt")
 const PADDING := 10.0
 const LEGEND_HEIGHT := 40.0
+const LEGEND_FONT_SIZE := 24
+const LEGEND_TEXT_COLOR := Color.WHITE
 const ROAD_COLOR := Color(0.36, 0.39, 0.42)
 const FINISH_COLOR := Color(0.95, 0.95, 0.92)
 const LAP_COLORS := [Color(0.4, 0.84, 0.9), Color(0.95, 0.78, 0.26), Color(0.93, 0.45, 0.75)]
@@ -77,6 +79,7 @@ func lap_color(index: int) -> Color:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
 func _map_area() -> Rect2:
@@ -92,9 +95,12 @@ func _draw() -> void:
 	for index in range(routes.size()):
 		if routes[index].size() >= 2:
 			draw_polyline(_world_to_map * routes[index], lap_color(index), PATH_WIDTH, true)
-	var legend_y := size.y - PADDING - 4.0
+	var legend_y := roundf(size.y - PADDING - 4.0)
 	var slot := (size.x - PADDING * 2.0) / maxi(routes.size(), 1)
 	for index in range(routes.size()):
-		var left := PADDING + slot * index + slot * 0.5 - 34.0
-		draw_rect(Rect2(left, legend_y - 7.0, 14.0, 4.0), lap_color(index))
-		draw_string(FONT, Vector2(left + 20.0, legend_y), "LAP %d" % (index + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, lap_color(index))
+		var label := "LAP %d" % (index + 1)
+		var label_width := FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, LEGEND_FONT_SIZE).x
+		var entry_width := 18.0 + label_width
+		var left := roundf(PADDING + slot * (index + 0.5) - entry_width * 0.5)
+		draw_rect(Rect2(left, legend_y - 12.0, 12.0, 6.0), lap_color(index))
+		draw_string(FONT, Vector2(left + 18.0, legend_y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, LEGEND_FONT_SIZE, LEGEND_TEXT_COLOR)

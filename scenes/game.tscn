@@ -19,7 +19,8 @@
 [ext_resource type="Script" uid="uid://ccweiuw2qm4em" path="res://scripts/speed_dashboard.gd" id="13_speed_dashboard"]
 [ext_resource type="Script" uid="uid://ddiu1xe7rq1x7" path="res://scripts/start_lights.gd" id="14_start_lights"]
 [ext_resource type="Script" uid="uid://co33uqgks5pm2" path="res://scripts/start_grid.gd" id="15_start_grid"]
-[ext_resource type="Script" path="res://scripts/minimap.gd" id="16_minimap"]
+[ext_resource type="Script" uid="uid://ev0sml4olu5l" path="res://scripts/minimap.gd" id="16_minimap"]
+[ext_resource type="Script" uid="uid://dvbkee0xn666g" path="res://scripts/skid_marks.gd" id="17_skid_marks"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
 size = Vector2(60, 32)
@@ -40,6 +41,9 @@ centered = false
 
 [node name="StartGrid" type="Node2D" parent="." unique_id=1134569221]
 script = ExtResource("15_start_grid")
+
+[node name="SkidMarks" type="Node2D" parent="." unique_id=417484517]
+script = ExtResource("17_skid_marks")
 
 [node name="PreviousLapPath" type="Line2D" parent="." unique_id=1847267528]
 texture_filter = 1
@@ -202,7 +206,7 @@ offset_bottom = 112.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("10_pixel_font")
 theme_override_font_sizes/font_size = 16
-text = "BRAKE"
+text = "REV"
 horizontal_alignment = 1
 
 [node name="RestartHUD" type="Control" parent="HUD" unique_id=1241904739]
@@ -426,12 +430,12 @@ theme_override_font_sizes/font_size = 24
 text = "FOR START SCREEN"
 vertical_alignment = 1
 
-[node name="MapGap" type="Control" parent="HUD/ResultPanel/Lines"]
+[node name="MapGap" type="Control" parent="HUD/ResultPanel/Lines" unique_id=898705990]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Minimap" type="Control" parent="HUD/ResultPanel/Lines"]
+[node name="Minimap" type="Control" parent="HUD/ResultPanel/Lines" unique_id=577312605]
 custom_minimum_size = Vector2(340, 308)
 layout_mode = 2
 size_flags_horizontal = 4
