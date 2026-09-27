@@ -55,7 +55,7 @@ func _ready() -> void:
 		if name == "engine" or name == "skid" or name == "curb_rub":
 			var loop_stream := player.stream as AudioStreamWAV
 			loop_stream.loop_begin = 0
-			loop_stream.loop_end = roundi(loop_stream.get_length() * loop_stream.mix_rate)
+			loop_stream.loop_end = roundi(loop_stream.get_length() * loop_stream.mix_rate) - 1
 			loop_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		add_child(player)
 		_players[name] = player

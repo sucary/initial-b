@@ -21,6 +21,7 @@
 [ext_resource type="Script" uid="uid://co33uqgks5pm2" path="res://scripts/start_grid.gd" id="15_start_grid"]
 [ext_resource type="Script" uid="uid://ev0sml4olu5l" path="res://scripts/minimap.gd" id="16_minimap"]
 [ext_resource type="Script" uid="uid://dvbkee0xn666g" path="res://scripts/skid_marks.gd" id="17_skid_marks"]
+[ext_resource type="Script" path="res://scripts/wind_streaks.gd" id="18_wind_streaks"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kart"]
 size = Vector2(60, 32)
@@ -68,9 +69,18 @@ script = ExtResource("3_kart")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Kart" unique_id=277379229]
 shape = SubResource("RectangleShape2D_kart")
 
+[node name="DropShadow" type="Sprite2D" parent="Kart"]
+modulate = Color(0, 0, 0, 0.35)
+texture_filter = 1
+position = Vector2(3, 4)
+texture = ExtResource("5_kart_shadow")
+
 [node name="KartSprite" type="Sprite2D" parent="Kart" unique_id=106395585]
 texture_filter = 1
 texture = ExtResource("5_kart")
+
+[node name="WindStreaks" type="Node2D" parent="Kart"]
+script = ExtResource("18_wind_streaks")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=796030122]
 script = ExtResource("4_camera")
