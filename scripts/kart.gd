@@ -30,6 +30,8 @@ const SIDE_SCRAPE_DRAG := 2.0
 const FULL_STEER_SPEED := 180.0
 const HIGH_SPEED_TURN_MIN := 0.45
 const TURN_ACCELERATION_PENALTY := 1.0
+const MAX_ACCELERATION_SCALE := 1.6
+const OVERSPEED_ACCELERATION := 0.4
 const SOFT_HIT_SPEED_KEPT := 0.55
 const SOFT_HIT_COOLDOWN := 0.35
 
@@ -117,7 +119,9 @@ func _physics_process(delta: float) -> void:
 	var turn_speed := steer * turn_rate * turn_scale * steering_response(absf(longitudinal_speed))
 
 	if throttle > 0.0:
-		var push := FORWARD_ACCELERATION * acceleration_scale * turning_acceleration(turn_speed, velocity.length())
+		var push := FORWARD_ACCELERATION * minf(acceleration_scale, MAX_ACCELERATION_SCALE) * turning_acceleration(turn_speed, velocity.length())
+		if velocity.length() > TOP_SPEED:
+			push *= OVERSPEED_ACCELERATION
 		if longitudinal_speed < 0.0:
 			push = maxf(push, REVERSE_RECOVERY_ACCELERATION)
 		elif drifting:
