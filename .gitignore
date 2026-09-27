@@ -2,4 +2,5 @@
 .godot/
 /android/
 tools/
+build/
 GAME_DESIGN.md

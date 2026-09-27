@@ -17,12 +17,8 @@ var _art_image: Image
 
 
 func build(track: RaceTrack, seed_value: int, art: Sprite2D = null) -> void:
-	var road_check := Callable()
-	if art != null:
-		_art = art
-		_art_image = art.texture.get_image()
-		road_check = is_drawn_road
-	layout = CourseLayout.new(track, seed_value, road_check)
+	_art = art
+	layout = CourseLayout.new(track, seed_value)
 	layout.generate_obstacles()
 	_obstacle_root = Node2D.new()
 	_box_root = Node2D.new()
@@ -53,6 +49,8 @@ func obstacle_nodes() -> Array[Node]:
 
 
 func is_drawn_road(world_position: Vector2) -> bool:
+	if _art_image == null:
+		_art_image = _art.texture.get_image()
 	var pixel := Vector2i((_art.to_local(world_position) - _art.offset).floor())
 	if not Rect2i(Vector2i.ZERO, _art_image.get_size()).has_point(pixel):
 		return false

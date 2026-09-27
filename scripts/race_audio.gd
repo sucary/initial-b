@@ -57,6 +57,7 @@ func _ready() -> void:
 			loop_stream.loop_begin = 0
 			loop_stream.loop_end = roundi(loop_stream.get_length() * loop_stream.mix_rate) - 1
 			loop_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 		add_child(player)
 		_players[name] = player
 
